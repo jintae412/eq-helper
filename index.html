@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#111111" />
+    <link rel="icon" href="/eq-helper/icon.svg" type="image/svg+xml" />
+    <title>EQ Helper</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; background: #111; color: #eee; }
+      main { max-width: 900px; margin: 0 auto; padding: 16px; }
+      button { font-size: 1rem; padding: 10px 16px; border-radius: 8px; border: 0; background: #2d6cdf; color: #fff; }
+      button.danger { background: #c62828; }
+      button.quiet { background: #333; }
+      input { font-size: 1rem; padding: 8px; border-radius: 8px; border: 1px solid #444; background: #1c1c1c; color: #eee; }
+      canvas { width: 100%; height: auto; background: #181818; border-radius: 8px; display: block; }
+      pre { background: #1c1c1c; padding: 8px; border-radius: 8px; overflow-x: auto; font-size: 0.8rem; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+      .error { color: #ff6b6b; }
+      .feedback { background: #4a1010; border: 1px solid #c62828; padding: 8px 12px; border-radius: 8px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
