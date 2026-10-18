@@ -5,7 +5,7 @@ import {
   type KbEntry, type SourceType, type Symptom,
 } from '../advice/knowledgeBase';
 import type { MixerProfile } from '../advice/mixer';
-import type { BandSetup } from '../storage/store';
+import type { BandSetup } from '../advice/band';
 
 interface Props {
   mixer: MixerProfile;
@@ -31,7 +31,7 @@ export function AskScreen({ mixer, band, onGoToSetup }: Props) {
   }, [symptom]);
 
   const options: SourceOption[] = [
-    ...(band?.sources.map((s) => ({ key: s.id, label: `${s.label || 'Unnamed'} (${SOURCE_LABELS[s.type]})`, type: s.type })) ?? []),
+    ...(band?.sources.map((s) => ({ key: s.id, label: `${s.label || 'Unnamed'} · ${SOURCE_LABELS[s.type]}`, type: s.type })) ?? []),
     ...SOURCE_TYPES.map((t) => ({ key: t, label: SOURCE_LABELS[t], type: t })),
   ];
   const source = options.find((o) => o.key === sourceKey);

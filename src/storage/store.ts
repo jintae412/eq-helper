@@ -1,30 +1,9 @@
+import { MIC_LABELS, type BandSetup, type BandSource } from '../advice/band';
 import { SOURCE_TYPES, type SourceType } from '../advice/knowledgeBase';
-import { createFromPreset, type EqBand, type MixerProfile } from '../advice/mixer';
-
-export const MIC_LABELS = {
-  'handheld-dynamic': 'Handheld (dynamic)',
-  headset: 'Headset',
-  lavalier: 'Lavalier / clip-on',
-  condenser: 'Condenser',
-  di: 'DI / line',
-} as const;
-export type MicType = keyof typeof MIC_LABELS;
-
-export interface BandSource {
-  id: string;
-  label: string;
-  type: SourceType;
-  mic?: MicType;
-}
-
-export interface BandSetup {
-  id: string;
-  name: string;
-  sources: BandSource[];
-}
+import { createFromPreset, defaultOutputs, MONITOR_LABELS, type EqBand, type MixerProfile, type RigOutputs } from '../advice/mixer';
 
 export interface AppData {
-  version: 1;
+  version: 2;
   mixers: MixerProfile[];
   activeMixerId: string;
   bands: BandSetup[];
@@ -38,7 +17,7 @@ type KeyValueStore = Pick<Storage, 'getItem' | 'setItem'>;
 
 export function defaults(): AppData {
   const mixer = createFromPreset('3-band', 'My mixer');
-  return { version: 1, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null };
+  return { version: 2, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null };
 }
 
 // ── Validation: saved data is a trust boundary (old versions, corruption, manual edits) ──
@@ -62,8 +41,15 @@ function isEqBand(x: unknown): x is EqBand {
   }
 }
 
+const isBool = (x: unknown): x is boolean => typeof x === 'boolean';
+
+const isRigOutputs = (x: unknown): x is RigOutputs =>
+  isObj(x) && Object.hasOwn(MONITOR_LABELS, x.monitors as string) &&
+  isBool(x.geqOnMains) && isBool(x.geqOnMonitors) && isBool(x.outputPeq);
+
 function isMixerProfile(x: unknown): x is MixerProfile {
   if (!isObj(x) || !isStr(x.id) || !isStr(x.name) || !Array.isArray(x.bands) || !x.bands.every(isEqBand)) return false;
+  if (!isRigOutputs(x.outputs)) return false;
   return x.hpf === undefined || (isObj(x.hpf) && isPos(x.hpf.minHz) && isPos(x.hpf.maxHz) && x.hpf.minHz <= x.hpf.maxHz);
 }
 
@@ -75,10 +61,32 @@ const isBandSource = (x: unknown): x is BandSource =>
 const isBandSetup = (x: unknown): x is BandSetup =>
   isObj(x) && isStr(x.id) && isStr(x.name) && Array.isArray(x.sources) && x.sources.every(isBandSource);
 
-/** Keeps every valid item; `dropped` says whether anything had to be thrown away. */
-export function parse(x: unknown): { data: AppData; dropped: boolean } {
-  if (!isObj(x) || x.version !== 1 || !Array.isArray(x.mixers) || !Array.isArray(x.bands)) {
-    return { data: defaults(), dropped: true };
+// ── Migrations: one function per version bump, applied in order ──
+
+/** v1 → v2: mixer profiles gained `outputs` (speakers + the EQ on them). */
+function migrateV1(x: Obj): Obj {
+  return {
+    ...x,
+    version: 2,
+    mixers: Array.isArray(x.mixers)
+      ? x.mixers.map((m) => (isObj(m) && Array.isArray(m.bands) ? { ...m, outputs: defaultOutputs(m.bands as { kind: string }[]) } : m))
+      : x.mixers,
+  };
+}
+
+/**
+ * Keeps every valid item. `dropped`: something had to be thrown away.
+ * `migrated`: an older version was upgraded (caller backs up the original either way).
+ */
+export function parse(input: unknown): { data: AppData; dropped: boolean; migrated: boolean } {
+  let x = input;
+  let migrated = false;
+  if (isObj(x) && x.version === 1) {
+    x = migrateV1(x);
+    migrated = true;
+  }
+  if (!isObj(x) || x.version !== 2 || !Array.isArray(x.mixers) || !Array.isArray(x.bands)) {
+    return { data: defaults(), dropped: true, migrated };
   }
   const mixers = x.mixers.filter(isMixerProfile);
   const bands = x.bands.filter(isBandSetup);
@@ -89,7 +97,7 @@ export function parse(x: unknown): { data: AppData; dropped: boolean } {
   }
   const activeMixerId = mixers.some((m) => m.id === x.activeMixerId) ? (x.activeMixerId as string) : mixers[0].id;
   const activeBandId = bands.some((b) => b.id === x.activeBandId) ? (x.activeBandId as string) : null;
-  return { data: { version: 1, mixers, activeMixerId, bands, activeBandId }, dropped };
+  return { data: { version: 2, mixers, activeMixerId, bands, activeBandId }, dropped, migrated };
 }
 
 export function load(storage: KeyValueStore = localStorage): { data: AppData; warning?: string } {
@@ -107,8 +115,8 @@ export function load(storage: KeyValueStore = localStorage): { data: AppData; wa
   } catch {
     json = undefined;
   }
-  const { data, dropped } = parse(json);
-  if (!dropped) return { data };
+  const { data, dropped, migrated } = parse(json);
+  if (!dropped && !migrated) return { data };
 
   // Keep the original so nothing is lost when the repaired data is saved over it.
   try {
@@ -116,6 +124,7 @@ export function load(storage: KeyValueStore = localStorage): { data: AppData; wa
   } catch {
     /* best effort */
   }
+  if (!dropped) return { data };
   return { data, warning: 'Some saved setup data was unreadable and has been reset. A backup copy was kept.' };
 }
 

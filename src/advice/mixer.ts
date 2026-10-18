@@ -11,12 +11,37 @@ export interface Hpf {
   maxHz: number;
 }
 
+export const MONITOR_LABELS = {
+  wedges: 'Wedges (floor monitors)',
+  iem: 'In-ear monitors',
+  none: 'No monitors',
+  unknown: 'Not sure',
+} as const;
+export type MonitorType = keyof typeof MONITOR_LABELS;
+
+/** Speakers and the EQ available on them. Travels with the band's rig. */
+export interface RigOutputs {
+  monitors: MonitorType;
+  geqOnMains: boolean;
+  geqOnMonitors: boolean;
+  outputPeq: boolean; // digital boards: parametric EQ on each output bus
+}
+
 export interface MixerProfile {
   id: string;
   name: string;
   hpf?: Hpf;
   bands: EqBand[];
+  outputs: RigOutputs;
 }
+
+/** Sensible guess: digital boards have output EQ; analog ones usually rely on an outboard graphic EQ, if any. */
+export const defaultOutputs = (bands: { kind: string }[]): RigOutputs => ({
+  monitors: 'unknown',
+  geqOnMains: false,
+  geqOnMonitors: false,
+  outputPeq: bands.some((b) => b.kind === 'parametric'),
+});
 
 /** What the advice engine wants, independent of hardware. */
 export type EqMove = { kind: 'eq'; freqHz: number; gainDb: number; q: number } | { kind: 'hpf'; freqHz: number };
@@ -28,7 +53,7 @@ export type Instruction =
 
 export type PresetKind = '3-band' | 'sweep-mid' | 'dual-sweep' | 'digital';
 
-export const PRESETS: Record<PresetKind, { label: string; profile: Omit<MixerProfile, 'id' | 'name'> }> = {
+export const PRESETS: Record<PresetKind, { label: string; profile: Omit<MixerProfile, 'id' | 'name' | 'outputs'> }> = {
   '3-band': {
     label: '3-band (LOW / MID / HIGH, no sweep)',
     profile: {
@@ -81,7 +106,8 @@ export const PRESETS: Record<PresetKind, { label: string; profile: Omit<MixerPro
 };
 
 export function createFromPreset(kind: PresetKind, name: string, id: string = crypto.randomUUID()): MixerProfile {
-  return { id, name, ...structuredClone(PRESETS[kind].profile) };
+  const profile = structuredClone(PRESETS[kind].profile);
+  return { id, name, ...profile, outputs: defaultOutputs(profile.bands) };
 }
 
 // A fixed band more than ~1 octave away does more collateral damage than good.

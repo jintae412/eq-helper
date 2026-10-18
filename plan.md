@@ -67,16 +67,24 @@ Goal: pick a source + symptom (or search), get advice translated to *your* mixer
 - [x] Bottom tabs: Listen / Ask / Setup (Listen stays mounted so the mic keeps running)
 - [x] Setup: mixer profile editor, band setups (sources with optional mic type)
 - [x] CI runs tests on PRs
-- [ ] Manual iPhone checklist after deploy
+- [x] Manual iPhone checklist after deploy
 - **Exit:** useful with zero audio; manual checklist passes
 - **Later gate (before sharing widely):** experienced mixer reviews every knowledge base entry
 
-### ⬜ Phase 2 — Feedback in full-mix mode
+### 🚧 Phase 2 — Feedback in full-mix mode
 Goal: catch real feedback fast, tell them exactly what to do with *their* gear.
 
-- [ ] Schema v2: mixer outputs (graphic EQ on mains / monitors, parametric EQ on outputs) + monitor type (wedges / IEM / none); v1→v2 migration + test
-- [ ] Gear-aware feedback steps: likely culprit (frequency range + band mic types) → diagnostic → fix on available EQ (output PEQ → GEQ slider → channel EQ)
-- [ ] Full-screen red takeover, visible on **any** tab
+- [x] Schema v2: rig outputs on the mixer profile (monitor type, graphic EQ on mains / monitors, parametric EQ on outputs); v1→v2 migration + test. Lives on the mixer profile because bands bring their own gear; move to rooms if venue PAs turn out common.
+- [x] Gear-aware feedback steps: likely culprit (frequency range + band mic types, e.g. "Pastor Mike (headset)") → diagnostic → fix on available EQ (output PEQ → GEQ slider → channel EQ)
+- [x] Non-blocking red banner on **every** tab: frequency, culprit, first step (more on tap); "Got it" hides until it recurs, "Not feedback" ignores for the session; auto-clears ~3 s after ringing stops
+- [x] Session-only feedback log on Listen: recurring frequencies get a "fix before next service" suggestion
+- [x] No sensitivity setting: one tuned value
+- [ ] Manual iPhone checklist (a steady tone into the mic, e.g. a 2.5 kHz test tone from another phone, triggers the banner on any tab)
+- **Exit:** synthetic tests pass; manual iPhone checklist passes
+
+### ⬜ Phase 2b — Detector tuning (needs recordings)
+Deferred until fixtures exist (feedback event, keys pad, held vocal note).
+
 - [ ] Fixture harness: decode WAV in Node → FFT matching `AnalyserNode` (Blackman window, dB) → run detector
 - [ ] Tune thresholds (`harmonicRangeDb`, prominence, frames) until it catches recorded feedback and ignores recorded pads/held notes
 - [ ] Confidence that uses growth rate, not just duration
@@ -95,6 +103,7 @@ Goal: catch real feedback fast, tell them exactly what to do with *their* gear.
 - [ ] Mode toggle inside the Listen tab: Full mix / Guided check (no extra tab)
 - [ ] Walk through the active band's sources: "solo X, play 15 s" → per-source findings
 - [ ] Boost-and-sweep suggestions allowed **only** here
+- [ ] Optional ring-out step for monitors (raise send until it just rings → cut → repeat 3–4×), with safety guidance: low volume, raise slowly, pull down immediately, nobody near the wedges
 - **Exit:** soloed-channel fixtures produce sensible per-source advice
 
 ### ⬜ Phase 5 — Compressor advice

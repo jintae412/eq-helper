@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { SOURCE_LABELS, SOURCE_TYPES, type SourceType } from '../advice/knowledgeBase';
-import { createFromPreset, PRESETS, type BandKind, type EqBand, type MixerProfile, type PresetKind } from '../advice/mixer';
-import { MIC_LABELS, type AppData, type BandSetup, type BandSource, type MicType } from '../storage/store';
+import {
+  createFromPreset, MONITOR_LABELS, PRESETS,
+  type BandKind, type EqBand, type MixerProfile, type MonitorType, type PresetKind, type RigOutputs,
+} from '../advice/mixer';
+import { MIC_LABELS, type BandSetup, type BandSource, type MicType } from '../advice/band';
+import type { AppData } from '../storage/store';
 import type { Update } from '../App';
 
 export function SetupScreen({ data, update }: { data: AppData; update: Update }) {
@@ -39,7 +43,7 @@ export function SetupScreen({ data, update }: { data: AppData; update: Update })
     <>
       <h1>Setup</h1>
 
-      <h2>Mixer</h2>
+      <h2>Mixer &amp; speakers</h2>
       <label className="field">
         Using
         <select value={mixer.id} onChange={(e) => update((d) => ({ ...d, activeMixerId: e.target.value }))}>
@@ -91,6 +95,8 @@ const KIND_LABELS: Record<BandKind, string> = { fixed: 'Fixed', sweep: 'Sweepabl
 
 function MixerEditor({ mixer, onChange }: { mixer: MixerProfile; onChange: (m: MixerProfile) => void }) {
   const setBand = (i: number, b: EqBand) => onChange({ ...mixer, bands: mixer.bands.map((x, j) => (j === i ? b : x)) });
+  const o = mixer.outputs;
+  const setOutputs = (patch: Partial<RigOutputs>) => onChange({ ...mixer, outputs: { ...o, ...patch } });
   const hpfMode = !mixer.hpf ? 'none' : mixer.hpf.minHz === mixer.hpf.maxHz ? 'fixed' : 'range';
 
   function setHpfMode(mode: string) {
@@ -151,6 +157,29 @@ function MixerEditor({ mixer, onChange }: { mixer: MixerProfile; onChange: (m: M
         onClick={() => onChange({ ...mixer, bands: [...mixer.bands, { kind: 'sweep', label: 'MID', minHz: 100, maxHz: 8000, maxGainDb: 15 }] })}>
         Add knob
       </button>
+
+      <h3>Speakers &amp; monitors</h3>
+      <p className="muted">Used to tailor feedback advice.</p>
+      <label className="field">
+        Monitors
+        <select value={o.monitors} onChange={(e) => setOutputs({ monitors: e.target.value as MonitorType })}>
+          {(Object.keys(MONITOR_LABELS) as MonitorType[]).map((m) => <option key={m} value={m}>{MONITOR_LABELS[m]}</option>)}
+        </select>
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={o.geqOnMains} onChange={(e) => setOutputs({ geqOnMains: e.target.checked })} />
+        Graphic EQ on the main speakers
+      </label>
+      {(o.monitors === 'wedges' || o.monitors === 'unknown') && (
+        <label className="check">
+          <input type="checkbox" checked={o.geqOnMonitors} onChange={(e) => setOutputs({ geqOnMonitors: e.target.checked })} />
+          Graphic EQ on the monitors
+        </label>
+      )}
+      <label className="check">
+        <input type="checkbox" checked={o.outputPeq} onChange={(e) => setOutputs({ outputPeq: e.target.checked })} />
+        Mixer has EQ on its outputs (most digital mixers)
+      </label>
     </div>
   );
 }

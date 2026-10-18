@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { load, save, type AppData } from './storage/store';
 import { ListenScreen } from './ui/ListenScreen';
+import { FeedbackBanner } from './ui/FeedbackBanner';
+import { useListening } from './ui/useListening';
 import { AskScreen } from './ui/AskScreen';
 import { SetupScreen } from './ui/SetupScreen';
 
@@ -28,21 +30,24 @@ function useAppData() {
 export function App() {
   const [tab, setTab] = useState<Tab>('listen');
   const { data, update, warning, dismissWarning } = useAppData();
+  const listening = useListening();
   const mixer = data.mixers.find((m) => m.id === data.activeMixerId) ?? data.mixers[0];
   const band = data.bands.find((b) => b.id === data.activeBandId);
 
   return (
     <>
       <main>
+        <FeedbackBanner alerts={listening.feedback.visible} outputs={mixer.outputs} band={band}
+          onAcknowledge={listening.acknowledge} onDismiss={listening.dismiss} />
         {warning && (
           <div className="row error">
             {warning}
             <button className="quiet" onClick={dismissWarning}>OK</button>
           </div>
         )}
-        {/* Hidden, not unmounted: the mic and feedback detection keep running on other tabs. */}
+        {/* Hidden, not unmounted, so screen state (recording, typed text) survives tab switches. */}
         <section hidden={tab !== 'listen'}>
-          <ListenScreen />
+          <ListenScreen listening={listening} mixer={mixer} />
         </section>
         <section hidden={tab !== 'ask'}>
           <AskScreen mixer={mixer} band={band} onGoToSetup={() => setTab('setup')} />

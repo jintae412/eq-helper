@@ -57,6 +57,28 @@ describe('storage', () => {
     expect(s.map.has(BACKUP_KEY)).toBe(true);
   });
 
+  it('migrates v1 data to v2 quietly, keeping a backup of the original', () => {
+    const v1 = {
+      version: 1,
+      mixers: [
+        { id: 'm1', name: 'Analog', hpf: { minHz: 80, maxHz: 80 }, bands: [{ kind: 'fixed', label: 'MID', freqHz: 2500, maxGainDb: 15 }] },
+        { id: 'm2', name: 'X32', bands: [{ kind: 'parametric', label: 'B1', minHz: 20, maxHz: 20000, maxGainDb: 15, minQ: 0.3, maxQ: 10 }] },
+      ],
+      activeMixerId: 'm2',
+      bands: [],
+      activeBandId: null,
+    };
+    const raw = JSON.stringify(v1);
+    const s = memoryStorage({ [STORAGE_KEY]: raw });
+    const { data, warning } = load(s);
+    expect(warning).toBeUndefined();
+    expect(data.version).toBe(2);
+    expect(data.activeMixerId).toBe('m2');
+    expect(data.mixers.map((m) => m.outputs.outputPeq)).toEqual([false, true]);
+    expect(data.mixers[0].outputs.monitors).toBe('unknown');
+    expect(s.map.get(BACKUP_KEY)).toBe(raw);
+  });
+
   it('warns instead of crashing when storage is blocked', () => {
     const blocked = { getItem: () => { throw new Error('SecurityError'); }, setItem: () => { throw new Error('QuotaExceeded'); } };
     expect(load(blocked).warning).toBeDefined();
