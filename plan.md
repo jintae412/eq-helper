@@ -8,9 +8,9 @@ what order**: workflow, phases, task checklists, exit criteria, and known debt.
 ## 1. Development workflow
 
 ### Branching & review
-- `main` is always deployable. Every push to `main` deploys to GitHub Pages.
-- One branch per phase (or per sizeable feature): `phase-1-ask-mode`, `phase-2-feedback`, …
-- Open a PR into `main`. CI runs tests + typecheck + build on the PR; merge only when green.
+- Solo project: commit straight to `main`, no feature branches or PRs.
+- Every push to `main` runs tests + typecheck + build first; a failure blocks the deploy, so
+  a broken build never reaches friends. Still run `npm test` locally before pushing.
 - Commits: imperative subject (`Add mixer translator`), body explains *why* when it isn't obvious.
 
 ### CI/CD (`.github/workflows/deploy.yml`)
