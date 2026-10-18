@@ -53,6 +53,11 @@
       .segmented { display: inline-flex; border: 1px solid #3a3a3a; border-radius: 8px; overflow: hidden; }
       .segmented button { background: #262626; border-radius: 0; }
       .segmented button[aria-pressed='true'] { background: #2d6cdf; }
+      .segmented.wide { display: flex; margin: 16px 0 4px; }
+      .segmented.wide button { flex: 1; }
+      progress { width: 100%; height: 12px; }
+      .sweep { border-top: 1px solid #2c2c2c; margin-top: 8px; padding-top: 8px; }
+      .peak { font-size: 1.3rem; }
       .tabs { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: #181818; border-top: 1px solid #2c2c2c; padding-bottom: env(safe-area-inset-bottom); }
       .tabs button { flex: 1; background: none; border-radius: 0; padding: 16px 0; color: #999; }
       .tabs button[aria-current='page'] { color: #4fc3f7; font-weight: 600; }

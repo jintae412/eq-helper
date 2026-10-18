@@ -1,5 +1,5 @@
 import type { BalanceFinding, Direction, Region } from '../analysis/balance';
-import { buildAnswer } from './ask';
+import { aimAt, buildAnswer } from './ask';
 import type { BandSetup } from './band';
 import { lookup, SOURCE_LABELS, type SourceType, type Symptom } from './knowledgeBase';
 import { formatHz, nearestGeqSlider, type MixerProfile, type RigOutputs } from './mixer';
@@ -139,13 +139,7 @@ export function describeFinding(f: BalanceFinding, mixer: MixerProfile, mode: Li
   for (const { source, symptom } of inBand.slice(0, MAX_SUSPECTS)) {
     const entry = lookup(source.type, symptom);
     if (!entry) continue;
-    // Aim at the measured frequency when it's inside where this problem usually lives.
-    const aimed = {
-      ...entry,
-      moves: entry.moves.map((m) =>
-        m.kind === 'eq' && m.rangeHz && f.freqHz >= m.rangeHz[0] && f.freqHz <= m.rangeHz[1] ? { ...m, freqHz: f.freqHz } : m),
-    };
-    const answer = buildAnswer(aimed, source.type, mixer);
+    const answer = buildAnswer(aimAt(entry, f.freqHz), source.type, mixer);
     steps.push(`Check ${source.label.trim() || SOURCE_LABELS[source.type]}: ${answer.steps.join(' ')}`);
   }
   if (steps.length === 0 && suspects.length > 0) {

@@ -68,3 +68,10 @@ export function permanentFix(freqHz: number, outputs: RigOutputs): string {
   }
   return `Before next service: cut ${hz} a little on the channel EQ of the mic that rang, or move that mic/speaker.`;
 }
+
+/** Ring-out: the fix belongs on the monitors, since that's the path being rung out. */
+export function ringOutFix(freqHz: number, outputs: RigOutputs): string {
+  if (outputs.outputPeq) return `On the monitor output EQ, cut ${formatHz(freqHz)} by 3–6 dB with a narrow Q (8–10).`;
+  if (outputs.geqOnMonitors) return `On the monitor graphic EQ, pull the ${formatHz(nearestGeqSlider(freqHz))} slider down 3–6 dB.`;
+  return `Cut ${formatHz(freqHz)} on this mic's channel EQ (narrow if you can). This also affects the mains, so keep it small.`;
+}

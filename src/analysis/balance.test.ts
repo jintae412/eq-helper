@@ -60,6 +60,13 @@ describe('findIssues (generic, vs the mix\'s own shape)', () => {
     expect(found[0]).toMatchObject({ direction: 'dip', freqHz: 250, knownRoomIssue: false });
   });
 
+  it('measures a broad resonance at close to its real size', () => {
+    // Roughly what a +9 dB, Q 1.4 peaking boost does to 1/3-octave bands.
+    const [f] = findIssues(withBands(flat(), { 315: 3, 400: 6, 500: 9, 630: 6, 800: 3 }), opts);
+    expect(f.freqHz).toBe(500);
+    expect(f.deviationDb).toBeGreaterThan(7);
+  });
+
   it('calls out a very dark mix', () => {
     const dark = BAND_CENTERS.map((f) => -30 - 9 * Math.log2(f / 1000));
     expect(tiltDbPerOctave(dark)).toBeCloseTo(-9);

@@ -90,7 +90,7 @@ Deferred until fixtures exist (feedback event, keys pad, held vocal note).
 - [ ] Confidence that uses growth rate, not just duration
 - **Exit:** passes fixture regression; tested live at one soundcheck
 
-### 🚧 Phase 3 — Tonal balance + rooms
+### ✅ Phase 3 — Tonal balance + rooms (built; iPhone check pending)
 - [x] 1/3-octave band power (63 Hz–12.5 kHz), rolling average with a silence gate
 - [x] Generic mode: deviation of each band from the mix's *own* trend (robust to phone mic + room); dips only flagged in the clarity range; wide-tolerance dark/bright tilt check
 - [x] Reference mode: shape vs the room's saved reference (level-normalized), ±3 dB, both directions
@@ -102,15 +102,20 @@ Deferred until fixtures exist (feedback event, keys pad, held vocal note).
 - [x] Music / Speech toggle; separate reference per mode per room
 - [x] Room profiles (schema v3): name, known resonances ("Save to room"), references; pre-service "known issues" card; known issues confirm faster and are badged
 - [x] "This sounds good — save as reference" with a keep-the-phone-at-the-board reminder
-- [ ] Manual iPhone check (real mic, real band)
+- [ ] Manual iPhone check (real mic, real music): watch for the status sticking on "first advice in…" (silence gate too strict)
 - **Exit:** synthetic tests pass; manual iPhone check; later: advice on recorded full-mix fixtures matches the spoken notes in them
 
-### ⬜ Phase 4 — Guided per-channel check
-- [ ] Mode toggle inside the Listen tab: Full mix / Guided check (no extra tab)
-- [ ] Walk through the active band's sources: "solo X, play 15 s" → per-source findings
-- [ ] Boost-and-sweep suggestions allowed **only** here
-- [ ] Optional ring-out step for monitors (raise send until it just rings → cut → repeat 3–4×), with safety guidance: low volume, raise slowly, pull down immediately, nobody near the wedges
-- **Exit:** soloed-channel fixtures produce sensible per-source advice
+### ✅ Phase 4 — Guided per-channel check (built; iPhone check pending)
+- [x] Mode toggle inside the Listen tab: Full mix / Guided check (no extra tab); full-mix balance pauses while guided
+- [x] Walks the active band's sources in order (Skip / Redo); no band → pick a source type for a one-off
+- [x] Prompt: "pull every fader down except X" (PFL/solo goes to headphones, not the PA, so the phone can't hear it)
+- [x] Capture length slider (8–30 s, default 15, saved); quiet moments don't count; "can't hear anything" hint
+- [x] Per-source analysis: bumps vs the source's own shape → that source's knowledge base entry whose range contains the bump (fallback: generic narrow cut); excess energy below the source's useful range → HPF advice; same low-end confidence rules as phase 3
+- [x] "Find it exactly": boost-and-sweep only here, with a turn-it-down-first warning; the app follows the loudest point while sweeping (sweepable/parametric boards only)
+- [x] Summary saved per person on the band setup with a date (schema v4); "Last check" shown next time
+- [x] Optional, skippable ring-out (wedges / not sure only): safety confirmation → per vocal mic, raise the monitor send until it rings → frequency + monitor fix → repeat up to 4 rings; feedback banner hidden during ring-out only
+- [ ] Manual iPhone check (real band at soundcheck)
+- **Exit:** synthetic tests pass; manual iPhone check; later: soloed-channel fixtures produce sensible per-source advice
 
 ### ⬜ Phase 5 — Compressor advice
 - [ ] Mixer profile: per-channel compressor capability (schema bump + migration)
@@ -134,7 +139,9 @@ Deferred until fixtures exist (feedback event, keys pad, held vocal note).
 - Feedback harmonic check is a 2×/3× heuristic; thresholds are guesses until fixtures exist.
 - Full-mix Ask answers assume a main graphic EQ until phase 2 adds output gear to profiles.
 - Shared vocal entries show both male/female hints (e.g. HPF note); split if it confuses people.
-- Feedback alerts only show on the Listen tab until phase 2's takeover.
+
+- Balance trend uses a median of ±4 neighbors (found in phase 4: a mean hid half of a broad resonance; skipping shoulders flagged steep roll-offs). Re-check against fixtures.
+- Solo capture reuses the full-mix silence gate (−45 dBFS); a quiet soloed source might never fill the capture. Tune with soloed fixtures.
 
 ## 4. Open questions
 - Which exact mixers/monitor setups do bands use? (Generic presets cover it for now.)

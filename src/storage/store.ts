@@ -5,7 +5,7 @@ import type { KnownResonance, RoomProfile, RoomReference } from '../advice/room'
 import { BALANCE_SPEEDS, BAND_CENTERS, type BalanceSpeed } from '../analysis/balance';
 
 export interface AppData {
-  version: 3;
+  version: 4;
   mixers: MixerProfile[];
   activeMixerId: string;
   bands: BandSetup[];
@@ -13,7 +13,10 @@ export interface AppData {
   rooms: RoomProfile[];
   activeRoomId: string | null;
   balanceSpeed: BalanceSpeed;
+  guidedSeconds: number;
 }
+
+export const GUIDED_SECONDS = { min: 8, max: 30, default: 15 };
 
 export const STORAGE_KEY = 'eq-helper/data';
 export const BACKUP_KEY = 'eq-helper/backup';
@@ -23,8 +26,8 @@ type KeyValueStore = Pick<Storage, 'getItem' | 'setItem'>;
 export function defaults(): AppData {
   const mixer = createFromPreset('3-band', 'My mixer');
   return {
-    version: 3, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null,
-    rooms: [], activeRoomId: null, balanceSpeed: 'normal',
+    version: 4, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null,
+    rooms: [], activeRoomId: null, balanceSpeed: 'normal', guidedSeconds: GUIDED_SECONDS.default,
   };
 }
 
@@ -61,10 +64,14 @@ function isMixerProfile(x: unknown): x is MixerProfile {
   return x.hpf === undefined || (isObj(x.hpf) && isPos(x.hpf.minHz) && isPos(x.hpf.maxHz) && x.hpf.minHz <= x.hpf.maxHz);
 }
 
+const isLastCheck = (x: unknown): boolean =>
+  isObj(x) && isStr(x.at) && Array.isArray(x.notes) && x.notes.every(isStr);
+
 const isBandSource = (x: unknown): x is BandSource =>
   isObj(x) && isStr(x.id) && isStr(x.label) &&
   SOURCE_TYPES.includes(x.type as SourceType) &&
-  (x.mic === undefined || Object.hasOwn(MIC_LABELS, x.mic as string));
+  (x.mic === undefined || Object.hasOwn(MIC_LABELS, x.mic as string)) &&
+  (x.lastCheck === undefined || isLastCheck(x.lastCheck));
 
 const isBandSetup = (x: unknown): x is BandSetup =>
   isObj(x) && isStr(x.id) && isStr(x.name) && Array.isArray(x.sources) && x.sources.every(isBandSource);
@@ -101,6 +108,11 @@ function migrateV2(x: Obj): Obj {
   return { ...x, version: 3, rooms: [], activeRoomId: null, balanceSpeed: 'normal' };
 }
 
+/** v3 → v4: guided check capture length (band sources gained an optional lastCheck). */
+function migrateV3(x: Obj): Obj {
+  return { ...x, version: 4, guidedSeconds: GUIDED_SECONDS.default };
+}
+
 /**
  * Keeps every valid item. `dropped`: something had to be thrown away.
  * `migrated`: an older version was upgraded (caller backs up the original either way).
@@ -116,7 +128,11 @@ export function parse(input: unknown): { data: AppData; dropped: boolean; migrat
     x = migrateV2(x);
     migrated = true;
   }
-  if (!isObj(x) || x.version !== 3 || !Array.isArray(x.mixers) || !Array.isArray(x.bands) || !Array.isArray(x.rooms)) {
+  if (isObj(x) && x.version === 3) {
+    x = migrateV3(x);
+    migrated = true;
+  }
+  if (!isObj(x) || x.version !== 4 || !Array.isArray(x.mixers) || !Array.isArray(x.bands) || !Array.isArray(x.rooms)) {
     return { data: defaults(), dropped: true, migrated };
   }
   const mixers = x.mixers.filter(isMixerProfile);
@@ -130,9 +146,11 @@ export function parse(input: unknown): { data: AppData; dropped: boolean; migrat
   const activeMixerId = mixers.some((m) => m.id === x.activeMixerId) ? (x.activeMixerId as string) : mixers[0].id;
   const activeBandId = bands.some((b) => b.id === x.activeBandId) ? (x.activeBandId as string) : null;
   const activeRoomId = rooms.some((r) => r.id === x.activeRoomId) ? (x.activeRoomId as string) : null;
+  const g = x.guidedSeconds;
+  const guidedSeconds = isNum(g) && g >= GUIDED_SECONDS.min && g <= GUIDED_SECONDS.max ? g : GUIDED_SECONDS.default;
   const balanceSpeed = Object.hasOwn(BALANCE_SPEEDS, x.balanceSpeed as string) ? (x.balanceSpeed as BalanceSpeed) : 'normal';
   return {
-    data: { version: 3, mixers, activeMixerId, bands, activeBandId, rooms, activeRoomId, balanceSpeed },
+    data: { version: 4, mixers, activeMixerId, bands, activeBandId, rooms, activeRoomId, balanceSpeed, guidedSeconds },
     dropped,
     migrated,
   };

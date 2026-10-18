@@ -20,6 +20,8 @@ export interface ListeningOptions {
   speed: BalanceSpeed;
   room?: RoomProfile;
   hasKit: boolean;
+  /** Guided check is soloing one source at a time: don't feed that into full-mix balance. */
+  balancePaused: boolean;
 }
 
 /** App-level mic, feedback detection and mix balance, so alerts work on every tab. */
@@ -50,7 +52,7 @@ export function useListening(options: ListeningOptions) {
       const found = detector.current.update({ db, binHz: capture.binHz });
       if (session.current.update(found, performance.now())) setFeedback(session.current.snapshot());
 
-      if (++tick % TICKS_PER_BAND_FRAME !== 0) return;
+      if (++tick % TICKS_PER_BAND_FRAME !== 0 || live.current.balancePaused) return;
       const avg = averager.current;
       avg.push(toThirdOctaves(db, capture.binHz));
       setFill((prev) => (prev === avg.fill ? prev : avg.fill));

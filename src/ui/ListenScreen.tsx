@@ -5,7 +5,17 @@ import { formatHz, type MixerProfile } from '../advice/mixer';
 import { drawSpectrum } from '../spectrumView';
 import type { Listening } from './useListening';
 
-export function ListenScreen({ listening, mixer, children }: { listening: Listening; mixer: MixerProfile; children?: ReactNode }) {
+export type ListenView = 'mix' | 'guided';
+
+interface Props {
+  listening: Listening;
+  mixer: MixerProfile;
+  view: ListenView;
+  onViewChange: (v: ListenView) => void;
+  children?: ReactNode;
+}
+
+export function ListenScreen({ listening, mixer, view, onViewChange, children }: Props) {
   const { capture, error, feedback } = listening;
   const [recording, setRecording] = useState<Recording | null>(null);
   const [recordError, setRecordError] = useState<string | null>(null);
@@ -60,6 +70,11 @@ export function ListenScreen({ listening, mixer, children }: { listening: Listen
       {error && <p className="error">{error}</p>}
 
       <canvas ref={canvasRef} width={1000} height={400} />
+
+      <div className="segmented wide" role="group" aria-label="Listen mode">
+        <button aria-pressed={view === 'mix'} onClick={() => onViewChange('mix')}>Full mix</button>
+        <button aria-pressed={view === 'guided'} onClick={() => onViewChange('guided')}>Guided check</button>
+      </div>
 
       {children}
 

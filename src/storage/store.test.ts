@@ -12,7 +12,7 @@ function memoryStorage(initial: Record<string, string> = {}) {
 
 const sample = (): AppData => {
   const d = defaults();
-  d.bands = [{ id: 'b1', name: 'Sunday', sources: [{ id: 's1', label: 'Sarah', type: 'female-vocal', mic: 'handheld-dynamic' }] }];
+  d.bands = [{ id: 'b1', name: 'Sunday', sources: [{ id: 's1', label: 'Sarah', type: 'female-vocal', mic: 'handheld-dynamic', lastCheck: { at: '2026-10-18', notes: ['Boxy (+6 dB around 500 Hz): cut it'] } }] }];
   d.activeBandId = 'b1';
   return d;
 };
@@ -72,7 +72,8 @@ describe('storage', () => {
     const s = memoryStorage({ [STORAGE_KEY]: raw });
     const { data, warning } = load(s);
     expect(warning).toBeUndefined();
-    expect(data.version).toBe(3);
+    expect(data.version).toBe(4);
+    expect(data.guidedSeconds).toBe(15);
     expect(data.rooms).toEqual([]);
     expect(data.balanceSpeed).toBe('normal');
     expect(data.activeMixerId).toBe('m2');
@@ -95,6 +96,11 @@ describe('storage', () => {
     const { data, warning } = load(s2);
     expect(warning).toBeDefined();
     expect(data.rooms.map((r) => r.id)).toEqual(['r1']);
+  });
+
+  it('clamps an out-of-range capture length back to the default', () => {
+    const s = memoryStorage({ [STORAGE_KEY]: JSON.stringify({ ...sample(), guidedSeconds: 999 }) });
+    expect(load(s).data.guidedSeconds).toBe(15);
   });
 
   it('warns instead of crashing when storage is blocked', () => {

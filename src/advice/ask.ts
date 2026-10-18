@@ -10,6 +10,15 @@ export interface Answer {
   why: string;
 }
 
+/** Retarget an entry's EQ moves at a measured frequency when it's inside where that problem usually lives. */
+export function aimAt(entry: KbEntry, freqHz: number): KbEntry {
+  return {
+    ...entry,
+    moves: entry.moves.map((m) =>
+      m.kind === 'eq' && m.rangeHz && freqHz >= m.rangeHz[0] && freqHz <= m.rangeHz[1] ? { ...m, freqHz } : m),
+  };
+}
+
 export function buildAnswer(entry: KbEntry, source: SourceType, mixer: MixerProfile): Answer {
   const ranges = entry.moves.flatMap((m) =>
     m.rangeHz ? [`Usually ${formatHz(m.rangeHz[0])}–${formatHz(m.rangeHz[1])}: if it doesn't help, try nearby in that range.`] : [],

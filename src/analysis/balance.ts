@@ -94,7 +94,7 @@ export const LOW_CONFIDENCE_BELOW_HZ = 160;
 const BUMP_DB = 4;
 const HOLE_DB = 5;
 const REF_TOLERANCE_DB = 3;
-const TREND_HALF_WIDTH = 3; // ±1 octave of neighbors
+const TREND_REACH = 4; // ±4/3 octave of neighbors
 // ponytail: tilt bounds are guesses for 1/3-octave band power at the board; tune with fixtures
 const DARK_SLOPE = -7;
 const BRIGHT_SLOPE = 1;
@@ -109,13 +109,17 @@ export function regionOf(freqHz: number): Region {
   return 'high';
 }
 
-/** Each band minus the average of its ±1-octave neighbors: +6 = bump, −6 = hole. */
-export function deviationsFromTrend(bandsDb: number[], halfWidth = TREND_HALF_WIDTH): number[] {
+/**
+ * Each band minus the MEDIAN of its ±4 neighbors (±4/3 octave): +6 = bump, −6 = hole.
+ * Median, not mean: a broad resonance lifts its own shoulders, and an average would hide about
+ * half of it; a median shrugs off those shoulders yet stays put on a smooth roll-off.
+ */
+export function deviationsFromTrend(bandsDb: number[], reach = TREND_REACH): number[] {
   return bandsDb.map((db, i) => {
-    const lo = Math.max(0, i - halfWidth);
-    const hi = Math.min(bandsDb.length, i + halfWidth + 1);
-    const neighbors = [...bandsDb.slice(lo, i), ...bandsDb.slice(i + 1, hi)];
-    return db - neighbors.reduce((a, b) => a + b, 0) / neighbors.length;
+    const neighbors = bandsDb.filter((_, j) => j !== i && Math.abs(j - i) <= reach).sort((a, b) => a - b);
+    const mid = neighbors.length / 2;
+    const median = neighbors.length % 2 ? neighbors[Math.floor(mid)] : (neighbors[mid - 1] + neighbors[mid]) / 2;
+    return db - median;
   });
 }
 
