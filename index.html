@@ -6,12 +6,18 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#111111" />
     <link rel="icon" href="/eq-helper/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/eq-helper/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="EQ Helper" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>EQ Helper</title>
     <style>
       :root { color-scheme: dark; font-family: system-ui, sans-serif; }
       body { margin: 0; background: #111; color: #eee; }
       main { max-width: 900px; margin: 0 auto; padding: 16px; }
-      button { font-size: 1rem; padding: 10px 16px; border-radius: 8px; border: 0; background: #2d6cdf; color: #fff; }
+      button { font-size: 1rem; padding: 10px 16px; min-height: 44px; border-radius: 8px; border: 0; background: #2d6cdf; color: #fff; }
+      :focus-visible { outline: 3px solid #4fc3f7; outline-offset: 2px; }
+      select, input:not([type='checkbox']):not([type='range']) { min-height: 44px; box-sizing: border-box; }
+      @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
       button.danger { background: #c62828; }
       button.quiet { background: #333; }
       input { font-size: 1rem; padding: 8px; border-radius: 8px; border: 1px solid #444; background: #1c1c1c; color: #eee; }
@@ -19,12 +25,12 @@
       pre { background: #1c1c1c; padding: 8px; border-radius: 8px; overflow-x: auto; font-size: 0.8rem; }
       .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
       .error { color: #ff6b6b; }
-      main { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+      main { padding-top: calc(16px + env(safe-area-inset-top)); padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
       h1 { margin-top: 0.5rem; }
       h3 { margin: 16px 0 6px; font-size: 1rem; }
       select { font-size: 1rem; padding: 8px; border-radius: 8px; border: 1px solid #444; background: #1c1c1c; color: #eee; }
       button:disabled { opacity: 0.4; }
-      button.link { background: none; padding: 0; color: #4fc3f7; text-decoration: underline; }
+      button.link { background: none; padding: 0 4px; min-height: 0; color: #4fc3f7; text-decoration: underline; }
       .muted { color: #999; }
       .chips { display: flex; flex-wrap: wrap; gap: 8px; }
       .chip { background: #262626; border: 1px solid #3a3a3a; min-height: 44px; }
@@ -36,13 +42,15 @@
       input.short { width: 9rem; }
       input.num { width: 5rem; }
       input[type='search'] { flex: 1; min-width: 0; }
+      input[type='range'] { width: 100%; min-height: 44px; }
       .band { align-items: flex-end; padding-bottom: 8px; border-bottom: 1px solid #2c2c2c; }
-      .banner { position: sticky; top: 0; z-index: 10; max-height: 50vh; overflow-y: auto; background: #4a1010; border: 1px solid #c62828; border-radius: 0 0 12px 12px; padding: 8px 12px; margin: 0 -16px 8px; }
+      .banner { position: sticky; top: env(safe-area-inset-top); z-index: 10; max-height: 50vh; overflow-y: auto; background: #4a1010; border: 1px solid #c62828; border-radius: 0 0 12px 12px; padding: 8px 12px; margin: 0 -16px 8px; }
       .banner-item + .banner-item { border-top: 1px solid #c62828; margin-top: 8px; padding-top: 8px; }
       .banner-item p { margin: 4px 0; }
       .banner .row { margin: 8px 0 4px; }
-      .check { display: flex; gap: 8px; align-items: center; margin: 8px 0; min-height: 32px; }
-      .check input { width: 20px; height: 20px; }
+      .check { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+      .check { min-height: 44px; }
+      .check input { width: 24px; height: 24px; }
       .log { padding-left: 20px; }
       .log li { margin: 6px 0; }
       details { margin: 12px 0; }

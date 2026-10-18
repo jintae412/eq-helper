@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['apple-touch-icon.png'],
       manifest: {
         name: 'EQ Helper',
         short_name: 'EQ Helper',
@@ -15,8 +16,13 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#111111',
         theme_color: '#111111',
-        // ponytail: SVG icon only; iOS home screen wants a 180px PNG apple-touch-icon, add before sharing
-        icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' }],
+        start_url: '.',
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }, // full-bleed, safe to crop
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' },
+        ],
       },
     }),
   ],

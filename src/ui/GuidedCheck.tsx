@@ -258,7 +258,7 @@ function Capturing({ listening, source, seconds, mixer, onDone, onCancel }: {
       <h2>Listening to {nameOf(source)}…</h2>
       <progress value={progress} max={1} aria-label="Capture progress" />
       <p className="muted">Pauses don't count, so it waits for sound.</p>
-      {hearNothing && <p className="note">Can't hear anything. Is {nameOf(source)}'s fader up, and are they {verb(source.type)}ing?</p>}
+      {hearNothing && <p className="note" role="status">Can't hear anything. Is {nameOf(source)}'s fader up, and are they {verb(source.type)}ing?</p>}
       <button className="quiet" onClick={onCancel}>Cancel</button>
     </div>
   );

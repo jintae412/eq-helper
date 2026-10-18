@@ -67,9 +67,12 @@ export function ListenScreen({ listening, mixer, view, onViewChange, children }:
           <button onClick={listening.start}>Start listening</button>
         )}
       </div>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
-      <canvas ref={canvasRef} width={1000} height={400} />
+      <canvas ref={canvasRef} width={1000} height={400} role="img"
+        aria-label={feedback.active.length
+          ? `Live frequency spectrum. Ringing at ${feedback.active.map((a) => formatHz(a.freqHz)).join(', ')}.`
+          : 'Live frequency spectrum.'} />
 
       <div className="segmented wide" role="group" aria-label="Listen mode">
         <button aria-pressed={view === 'mix'} onClick={() => onViewChange('mix')}>Full mix</button>

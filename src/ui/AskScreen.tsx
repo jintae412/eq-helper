@@ -27,7 +27,9 @@ export function AskScreen({ mixer, band, onGoToSetup }: Props) {
 
   // On a phone the answer lands below the fold; bring it into view after a chip tap.
   useEffect(() => {
-    if (symptom) answersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!symptom) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    answersRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   }, [symptom]);
 
   const options: SourceOption[] = [

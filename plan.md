@@ -56,7 +56,7 @@ recordings. Next: phase 6 (ready for friends), or 2b once recordings exist.
 | 3 Balance + rooms | ✅ built · iPhone check pending |
 | 4 Guided check + ring-out | ✅ built · iPhone check pending |
 | 5 Compressor advice | ✅ built · iPhone check pending |
-| 6 Ready for friends | ⬜ |
+| 6 Ready for friends | 🚧 icons + accessibility done |
 
 ### ✅ Phase 0 — Platform test
 Goal: prove a free PWA can do the job on an iPhone.
@@ -149,11 +149,12 @@ is described by behavior ("until the meter shows 3–6 dB on the loudest lines")
 - [ ] Manual iPhone check (guided check on a real singer; Speech mode during a talk)
 - **Exit:** synthetic tests pass; manual iPhone check; reviewed by the experienced mixer
 
-### ⬜ Phase 6 — Ready for friends
+### 🚧 Phase 6 — Ready for friends
 - [ ] Knowledge base review complete (EQ entries **and** compressor starting points)
-- [ ] PNG icons (180 px apple-touch-icon, 192/512 manifest)
+- [x] PNG icons (180 px apple-touch-icon, 192/512 manifest + maskable), full-bleed so iOS/Android can round/crop them
 - [ ] "How to install" page with screenshots (Safari → Share → Add to Home Screen)
-- [ ] Accessibility pass (contrast, tap targets, VoiceOver labels)
+- [x] Accessibility pass: every color pair ≥ 4.5:1 (measured), 44 px tap targets, visible keyboard focus, labelled spectrum, polite live status, reduced motion, iOS safe areas
+- [ ] VoiceOver walkthrough on a real iPhone
 - [ ] Small friends beta, collect feedback
 
 ---
@@ -161,7 +162,6 @@ is described by behavior ("until the meter shows 3–6 dB on the loudest lines")
 ## 3. Known debt / backlog
 - `npm audit`: critical/moderate advisories in Vitest's tinypool/mocker (dev-only, not shipped).
   Fix: upgrade local Node to 22 LTS → Vitest 5 + Vite 7.
-- iOS home-screen icon is SVG only (phase 6).
 - Recorder buffers in memory (~11 MB/min); stream to IndexedDB if long recordings are needed.
 - Feedback harmonic check is a 2×/3× heuristic; thresholds are guesses until fixtures exist.
 - Full-mix Ask answers assume a main graphic EQ until phase 2 adds output gear to profiles.

@@ -69,7 +69,7 @@ export function App() {
         <FeedbackBanner alerts={ringingOut ? [] : listening.feedback.visible} outputs={mixer.outputs} band={band}
           onAcknowledge={listening.acknowledge} onDismiss={listening.dismiss} />
         {warning && (
-          <div className="row error">
+          <div className="row error" role="alert">
             {warning}
             <button className="quiet" onClick={dismissWarning}>OK</button>
           </div>

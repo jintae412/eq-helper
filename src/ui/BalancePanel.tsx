@@ -80,7 +80,7 @@ export function BalancePanel({ listening, mixer, band, room, speed, onSpeedChang
             : `No ${mode} reference for ${room.name || 'this room'} yet: comparing the mix to its own overall shape.`}
       </p>
 
-      {status && <p>{status}</p>}
+      <p aria-live="polite">{status}</p>
 
       {balance.current.slice(0, MAX_CARDS).map((issue, i) => (
         <IssueCard key={issue.key} issue={issue} primary={i === 0} mixer={mixer} band={band} mode={mode}
