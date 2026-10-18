@@ -5,6 +5,7 @@ import { GuidedCheck } from './ui/GuidedCheck';
 import { FeedbackBanner } from './ui/FeedbackBanner';
 import { useListening } from './ui/useListening';
 import { BalancePanel } from './ui/BalancePanel';
+import { InstallCard, StartHere } from './ui/Help';
 import type { SourceType } from './advice/knowledgeBase';
 import { AskScreen } from './ui/AskScreen';
 import { SetupScreen } from './ui/SetupScreen';
@@ -74,6 +75,8 @@ export function App() {
             <button className="quiet" onClick={dismissWarning}>OK</button>
           </div>
         )}
+        <InstallCard />
+        {tab === 'listen' && <StartHere onGoToSetup={() => setTab('setup')} />}
         {/* Hidden, not unmounted, so screen state (recording, typed text) survives tab switches. */}
         <section hidden={tab !== 'listen'}>
           <ListenScreen listening={listening} mixer={mixer} view={view} onViewChange={setView}>

@@ -128,7 +128,22 @@ marked with `ponytail:` comments.
 
 ---
 
-## 6. Report back
+## 6. Phase 6: before sharing with friends
+
+- [ ] **Knowledge base review.** Run `npm run kb:review` (or use `docs/kb-review.md` on GitHub)
+  and send it to your experienced mixer friend. They tick rows that look right and note changes.
+  Send the notes back; the entries get updated and the file regenerated.
+- [ ] **VoiceOver walkthrough.** iPhone Settings → Accessibility → VoiceOver on. Swipe through
+  each tab. Every button and field should be read out with a sensible name; the red feedback
+  banner should be announced when it appears.
+- [ ] **Fresh-install test.** On a phone that has never opened the app: open the link in Safari →
+  the "Install EQ Helper" card shows → follow it → open from the home screen → "Start here" shows.
+- [ ] **Feedback path.** Setup → Help → Report a problem → Open a new issue. Check the form opens
+  pre-filled (you can close it without submitting).
+- [ ] **Small beta.** Share the link with 2–3 friends; ask them to try one soundcheck and report
+  back by text or GitHub.
+
+## 7. Report back
 
 After a session, send:
 - which boxes passed,

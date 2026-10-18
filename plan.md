@@ -56,7 +56,7 @@ recordings. Next: phase 6 (ready for friends), or 2b once recordings exist.
 | 3 Balance + rooms | ✅ built · iPhone check pending |
 | 4 Guided check + ring-out | ✅ built · iPhone check pending |
 | 5 Compressor advice | ✅ built · iPhone check pending |
-| 6 Ready for friends | 🚧 icons + accessibility done |
+| 6 Ready for friends | 🚧 app side done; review, VoiceOver check, and beta are people tasks (see todo.md) |
 
 ### ✅ Phase 0 — Platform test
 Goal: prove a free PWA can do the job on an iPhone.
@@ -150,9 +150,12 @@ is described by behavior ("until the meter shows 3–6 dB on the loudest lines")
 - **Exit:** synthetic tests pass; manual iPhone check; reviewed by the experienced mixer
 
 ### 🚧 Phase 6 — Ready for friends
+- [x] Review sheet for the experienced mixer: `npm run kb:review` → `docs/kb-review.md`, generated from the app's data (a test fails if it's stale)
 - [ ] Knowledge base review complete (EQ entries **and** compressor starting points)
 - [x] PNG icons (180 px apple-touch-icon, 192/512 manifest + maskable), full-bleed so iOS/Android can round/crop them
-- [ ] "How to install" page with screenshots (Safari → Share → Add to Home Screen)
+- [x] Install guide: card when opened in a browser instead of from the home screen, plus Setup → Help (text + drawn Share/Add icons; no screenshots)
+- [x] First-run "Start here" card (mixer → band → when to use which mode)
+- [x] Feedback: "tell the person who shared it" + GitHub Issues with step-by-step instructions, a pre-filled form, and a public-issues privacy note; app version shown in Help
 - [x] Accessibility pass: every color pair ≥ 4.5:1 (measured), 44 px tap targets, visible keyboard focus, labelled spectrum, polite live status, reduced motion, iOS safe areas
 - [ ] VoiceOver walkthrough on a real iPhone
 - [ ] Small friends beta, collect feedback

@@ -6,6 +6,7 @@ import {
 } from '../advice/mixer';
 import { MIC_LABELS, type BandSetup, type BandSource, type MicType } from '../advice/band';
 import type { AppData } from '../storage/store';
+import { HelpSection } from './Help';
 import type { ListenMode, RoomProfile } from '../advice/room';
 import { formatHz } from '../advice/mixer';
 import type { Update } from '../App';
@@ -108,6 +109,8 @@ export function SetupScreen({ data, update }: { data: AppData; update: Update })
           <button className="danger" onClick={deleteRoom}>Delete this room</button>
         </>
       )}
+
+      <HelpSection />
     </>
   );
 }
