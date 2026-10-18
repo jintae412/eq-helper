@@ -71,7 +71,7 @@ Goal: pick a source + symptom (or search), get advice translated to *your* mixer
 - **Exit:** useful with zero audio; manual checklist passes
 - **Later gate (before sharing widely):** experienced mixer reviews every knowledge base entry
 
-### 🚧 Phase 2 — Feedback in full-mix mode
+### ✅ Phase 2 — Feedback in full-mix mode
 Goal: catch real feedback fast, tell them exactly what to do with *their* gear.
 
 - [x] Schema v2: rig outputs on the mixer profile (monitor type, graphic EQ on mains / monitors, parametric EQ on outputs); v1→v2 migration + test. Lives on the mixer profile because bands bring their own gear; move to rooms if venue PAs turn out common.
@@ -79,7 +79,7 @@ Goal: catch real feedback fast, tell them exactly what to do with *their* gear.
 - [x] Non-blocking red banner on **every** tab: frequency, culprit, first step (more on tap); "Got it" hides until it recurs, "Not feedback" ignores for the session; auto-clears ~3 s after ringing stops
 - [x] Session-only feedback log on Listen: recurring frequencies get a "fix before next service" suggestion
 - [x] No sensitivity setting: one tuned value
-- [ ] Manual iPhone checklist (a steady tone into the mic, e.g. a 2.5 kHz test tone from another phone, triggers the banner on any tab)
+- [x] Manual iPhone checklist (a steady tone into the mic, e.g. a 2.5 kHz test tone from another phone, triggers the banner on any tab)
 - **Exit:** synthetic tests pass; manual iPhone checklist passes
 
 ### ⬜ Phase 2b — Detector tuning (needs recordings)
@@ -90,14 +90,20 @@ Deferred until fixtures exist (feedback event, keys pad, held vocal note).
 - [ ] Confidence that uses growth rate, not just duration
 - **Exit:** passes fixture regression; tested live at one soundcheck
 
-### ⬜ Phase 3 — Tonal balance + rooms
-- [ ] 1/3-octave band analysis of the full mix, smoothed over seconds
-- [ ] Generic target curve; then "This sounds good — save as reference" per room, reporting drift
-- [ ] Room profiles: label, known resonances ("Save to room" from findings), reference spectrum
-- [ ] Music / Speech toggle (different targets; speech = headset, highest feedback risk)
-- [ ] Lower confidence when the band includes a real kit
-- [ ] Top-issue card + two secondary cards
-- **Exit:** advice on recorded full-mix fixtures matches the spoken notes in them
+### 🚧 Phase 3 — Tonal balance + rooms
+- [x] 1/3-octave band power (63 Hz–12.5 kHz), rolling average with a silence gate
+- [x] Generic mode: deviation of each band from the mix's *own* trend (robust to phone mic + room); dips only flagged in the clarity range; wide-tolerance dark/bright tilt check
+- [x] Reference mode: shape vs the room's saved reference (level-normalized), ±3 dB, both directions
+- [x] Nothing below 80 Hz; 80–160 Hz findings marked low-confidence with a visible explanation (phone mic roll-off, board ≠ room)
+- [x] Real kit in band → drop brightness findings above 5 kHz, low-confidence low end, with a note (cajón / e-kit don't count)
+- [x] Responsiveness: Steady / Normal / Fast (window 30/15/8 s, confirmations 3/2/1); saved per device
+- [x] Stability: card appears after N confirmations, clears after N clean checks, then moves to an "Earlier this session" log
+- [x] Cards: top issue + two secondary; channel fixes on likely suspects from the band first, main EQ fallback
+- [x] Music / Speech toggle; separate reference per mode per room
+- [x] Room profiles (schema v3): name, known resonances ("Save to room"), references; pre-service "known issues" card; known issues confirm faster and are badged
+- [x] "This sounds good — save as reference" with a keep-the-phone-at-the-board reminder
+- [ ] Manual iPhone check (real mic, real band)
+- **Exit:** synthetic tests pass; manual iPhone check; later: advice on recorded full-mix fixtures matches the spoken notes in them
 
 ### ⬜ Phase 4 — Guided per-channel check
 - [ ] Mode toggle inside the Listen tab: Full mix / Guided check (no extra tab)

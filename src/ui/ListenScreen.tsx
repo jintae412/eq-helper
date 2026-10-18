@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { saveRecording, startRecording, type Recording } from '../audio/recorder';
 import { permanentFix } from '../advice/feedbackAdvice';
 import { formatHz, type MixerProfile } from '../advice/mixer';
 import { drawSpectrum } from '../spectrumView';
 import type { Listening } from './useListening';
 
-export function ListenScreen({ listening, mixer }: { listening: Listening; mixer: MixerProfile }) {
+export function ListenScreen({ listening, mixer, children }: { listening: Listening; mixer: MixerProfile; children?: ReactNode }) {
   const { capture, error, feedback } = listening;
   const [recording, setRecording] = useState<Recording | null>(null);
   const [recordError, setRecordError] = useState<string | null>(null);
@@ -60,6 +60,8 @@ export function ListenScreen({ listening, mixer }: { listening: Listening; mixer
       {error && <p className="error">{error}</p>}
 
       <canvas ref={canvasRef} width={1000} height={400} />
+
+      {children}
 
       {feedback.log.length > 0 && (
         <>

@@ -6,12 +6,26 @@ import {
 } from '../advice/mixer';
 import { MIC_LABELS, type BandSetup, type BandSource, type MicType } from '../advice/band';
 import type { AppData } from '../storage/store';
+import type { ListenMode, RoomProfile } from '../advice/room';
+import { formatHz } from '../advice/mixer';
 import type { Update } from '../App';
 
 export function SetupScreen({ data, update }: { data: AppData; update: Update }) {
   const [preset, setPreset] = useState<PresetKind>('3-band');
   const mixer = data.mixers.find((m) => m.id === data.activeMixerId) ?? data.mixers[0];
   const band = data.bands.find((b) => b.id === data.activeBandId);
+  const room = data.rooms.find((r) => r.id === data.activeRoomId);
+  const setRoom = (r: RoomProfile) => update((d) => ({ ...d, rooms: d.rooms.map((x) => (x.id === r.id ? r : x)) }));
+
+  function addRoom() {
+    const r: RoomProfile = { id: crypto.randomUUID(), name: 'New room', knownResonances: [], references: {} };
+    update((d) => ({ ...d, rooms: [...d.rooms, r], activeRoomId: r.id }));
+  }
+
+  function deleteRoom() {
+    if (!room || !confirm(`Delete "${room.name}"? Its known issues and references go with it.`)) return;
+    update((d) => ({ ...d, rooms: d.rooms.filter((r) => r.id !== room.id), activeRoomId: null }));
+  }
 
   const setMixer = (m: MixerProfile) => update((d) => ({ ...d, mixers: d.mixers.map((x) => (x.id === m.id ? m : x)) }));
   const setBand = (b: BandSetup) => update((d) => ({ ...d, bands: d.bands.map((x) => (x.id === b.id ? b : x)) }));
@@ -76,7 +90,75 @@ export function SetupScreen({ data, update }: { data: AppData; update: Update })
           <button className="danger" onClick={deleteBand}>Delete this band</button>
         </>
       )}
+
+      <h2>Room</h2>
+      <label className="field">
+        Playing at
+        <select value={data.activeRoomId ?? ''} onChange={(e) => update((d) => ({ ...d, activeRoomId: e.target.value || null }))}>
+          <option value="">None</option>
+          {data.rooms.map((r) => <option key={r.id} value={r.id}>{r.name || 'Untitled room'}</option>)}
+        </select>
+      </label>
+      <div className="row">
+        <button className="quiet" onClick={addRoom}>New room</button>
+      </div>
+      {room && (
+        <>
+          <RoomEditor key={room.id} room={room} onChange={setRoom} />
+          <button className="danger" onClick={deleteRoom}>Delete this room</button>
+        </>
+      )}
     </>
+  );
+}
+
+// ── Room editor ─────────────────────────────────────────────────────────────
+
+const MODE_LABELS: Record<ListenMode, string> = { music: 'Music', speech: 'Speech' };
+
+function RoomEditor({ room, onChange }: { room: RoomProfile; onChange: (r: RoomProfile) => void }) {
+  const setResonance = (i: number, patch: Partial<RoomProfile['knownResonances'][number]>) =>
+    onChange({ ...room, knownResonances: room.knownResonances.map((k, j) => (j === i ? { ...k, ...patch } : k)) });
+
+  function clearReference(mode: ListenMode) {
+    const references = { ...room.references };
+    delete references[mode];
+    onChange({ ...room, references });
+  }
+
+  return (
+    <div className="card">
+      <label className="field">
+        Room name
+        <input value={room.name} onChange={(e) => onChange({ ...room, name: e.target.value })} />
+      </label>
+
+      <h3>Known issues</h3>
+      <p className="muted">Frequencies this room always has trouble with. Add them here or with "Save to room" on the Listen tab.</p>
+      {room.knownResonances.map((k, i) => (
+        <div key={i} className="row band">
+          <NumberField label="Hz" value={k.freqHz} min={20} max={20000} onCommit={(freqHz) => setResonance(i, { freqHz })} />
+          <input className="short" placeholder="Note, e.g. boomy" value={k.note} aria-label={`Note for ${formatHz(k.freqHz)}`}
+            onChange={(e) => setResonance(i, { note: e.target.value })} />
+          <button className="quiet" aria-label={`Remove ${formatHz(k.freqHz)}`}
+            onClick={() => onChange({ ...room, knownResonances: room.knownResonances.filter((_, j) => j !== i) })}>✕</button>
+        </div>
+      ))}
+      <button className="quiet" onClick={() => onChange({ ...room, knownResonances: [...room.knownResonances, { freqHz: 125, note: '' }] })}>
+        Add known issue
+      </button>
+
+      <h3>"Sounds good" references</h3>
+      {(Object.keys(MODE_LABELS) as ListenMode[]).map((m) => {
+        const ref = room.references[m];
+        return (
+          <div key={m} className="row">
+            <span>{MODE_LABELS[m]}: {ref ? `saved ${new Date(ref.savedAt).toLocaleDateString()}` : 'none yet (save one from the Listen tab)'}</span>
+            {ref && <button className="quiet" onClick={() => clearReference(m)}>Clear</button>}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

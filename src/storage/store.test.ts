@@ -72,11 +72,29 @@ describe('storage', () => {
     const s = memoryStorage({ [STORAGE_KEY]: raw });
     const { data, warning } = load(s);
     expect(warning).toBeUndefined();
-    expect(data.version).toBe(2);
+    expect(data.version).toBe(3);
+    expect(data.rooms).toEqual([]);
+    expect(data.balanceSpeed).toBe('normal');
     expect(data.activeMixerId).toBe('m2');
     expect(data.mixers.map((m) => m.outputs.outputPeq)).toEqual([false, true]);
     expect(data.mixers[0].outputs.monitors).toBe('unknown');
     expect(s.map.get(BACKUP_KEY)).toBe(raw);
+  });
+
+  it('round-trips rooms and drops a room with a malformed reference', () => {
+    const good = sample();
+    good.rooms = [{ id: 'r1', name: 'Fellowship hall', knownResonances: [{ freqHz: 125, note: 'boom' }], references: { music: { savedAt: '2026-10-18', bandsDb: Array(24).fill(-30) } } }];
+    good.activeRoomId = 'r1';
+    good.balanceSpeed = 'fast';
+    const s = memoryStorage();
+    save(good, s);
+    expect(load(s)).toEqual({ data: good });
+
+    const bad = { ...good, rooms: [...good.rooms, { id: 'r2', name: 'x', knownResonances: [], references: { speech: { savedAt: 'x', bandsDb: [1, 2] } } }] };
+    const s2 = memoryStorage({ [STORAGE_KEY]: JSON.stringify(bad) });
+    const { data, warning } = load(s2);
+    expect(warning).toBeDefined();
+    expect(data.rooms.map((r) => r.id)).toEqual(['r1']);
   });
 
   it('warns instead of crashing when storage is blocked', () => {

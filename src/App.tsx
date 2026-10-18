@@ -3,6 +3,8 @@ import { load, save, type AppData } from './storage/store';
 import { ListenScreen } from './ui/ListenScreen';
 import { FeedbackBanner } from './ui/FeedbackBanner';
 import { useListening } from './ui/useListening';
+import { BalancePanel } from './ui/BalancePanel';
+import type { SourceType } from './advice/knowledgeBase';
 import { AskScreen } from './ui/AskScreen';
 import { SetupScreen } from './ui/SetupScreen';
 
@@ -14,6 +16,10 @@ const TABS = [
 type Tab = (typeof TABS)[number]['id'];
 
 export type Update = (fn: (d: AppData) => AppData) => void;
+
+// Real kits skew the full-mix spectrum (cymbal wash, kick boom); cajón and e-kits don't count.
+const KIT: SourceType[] = ['kick', 'snare', 'toms', 'overheads'];
+const SAME_RESONANCE_OCTAVES = 1 / 6;
 
 function useAppData() {
   const [initial] = useState(() => load());
@@ -30,9 +36,14 @@ function useAppData() {
 export function App() {
   const [tab, setTab] = useState<Tab>('listen');
   const { data, update, warning, dismissWarning } = useAppData();
-  const listening = useListening();
   const mixer = data.mixers.find((m) => m.id === data.activeMixerId) ?? data.mixers[0];
   const band = data.bands.find((b) => b.id === data.activeBandId);
+  const room = data.rooms.find((r) => r.id === data.activeRoomId);
+  const hasKit = band?.sources.some((s) => KIT.includes(s.type)) ?? false;
+  const listening = useListening({ speed: data.balanceSpeed, room, hasKit });
+
+  const updateRoom = (fn: (r: NonNullable<typeof room>) => NonNullable<typeof room>) =>
+    room && update((d) => ({ ...d, rooms: d.rooms.map((r) => (r.id === room.id ? fn(r) : r)) }));
 
   return (
     <>
@@ -47,7 +58,17 @@ export function App() {
         )}
         {/* Hidden, not unmounted, so screen state (recording, typed text) survives tab switches. */}
         <section hidden={tab !== 'listen'}>
-          <ListenScreen listening={listening} mixer={mixer} />
+          <ListenScreen listening={listening} mixer={mixer}>
+            <BalancePanel listening={listening} mixer={mixer} band={band} room={room} speed={data.balanceSpeed}
+              onSpeedChange={(balanceSpeed) => update((d) => ({ ...d, balanceSpeed }))}
+              onSaveReference={(mode, bandsDb) =>
+                updateRoom((r) => ({ ...r, references: { ...r.references, [mode]: { savedAt: new Date().toISOString(), bandsDb } } }))}
+              onSaveResonance={(freqHz, note) =>
+                updateRoom((r) =>
+                  r.knownResonances.some((k) => Math.abs(Math.log2(k.freqHz / freqHz)) <= SAME_RESONANCE_OCTAVES)
+                    ? r
+                    : { ...r, knownResonances: [...r.knownResonances, { freqHz, note }] })} />
+          </ListenScreen>
         </section>
         <section hidden={tab !== 'ask'}>
           <AskScreen mixer={mixer} band={band} onGoToSetup={() => setTab('setup')} />

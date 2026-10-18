@@ -1,13 +1,18 @@
 import { MIC_LABELS, type BandSetup, type BandSource } from '../advice/band';
 import { SOURCE_TYPES, type SourceType } from '../advice/knowledgeBase';
 import { createFromPreset, defaultOutputs, MONITOR_LABELS, type EqBand, type MixerProfile, type RigOutputs } from '../advice/mixer';
+import type { KnownResonance, RoomProfile, RoomReference } from '../advice/room';
+import { BALANCE_SPEEDS, BAND_CENTERS, type BalanceSpeed } from '../analysis/balance';
 
 export interface AppData {
-  version: 2;
+  version: 3;
   mixers: MixerProfile[];
   activeMixerId: string;
   bands: BandSetup[];
   activeBandId: string | null;
+  rooms: RoomProfile[];
+  activeRoomId: string | null;
+  balanceSpeed: BalanceSpeed;
 }
 
 export const STORAGE_KEY = 'eq-helper/data';
@@ -17,7 +22,10 @@ type KeyValueStore = Pick<Storage, 'getItem' | 'setItem'>;
 
 export function defaults(): AppData {
   const mixer = createFromPreset('3-band', 'My mixer');
-  return { version: 2, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null };
+  return {
+    version: 3, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null,
+    rooms: [], activeRoomId: null, balanceSpeed: 'normal',
+  };
 }
 
 // ── Validation: saved data is a trust boundary (old versions, corruption, manual edits) ──
@@ -61,6 +69,20 @@ const isBandSource = (x: unknown): x is BandSource =>
 const isBandSetup = (x: unknown): x is BandSetup =>
   isObj(x) && isStr(x.id) && isStr(x.name) && Array.isArray(x.sources) && x.sources.every(isBandSource);
 
+const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
+
+const isResonance = (x: unknown): x is KnownResonance => isObj(x) && isPos(x.freqHz) && isStr(x.note);
+
+const isReference = (x: unknown): x is RoomReference =>
+  isObj(x) && isStr(x.savedAt) && Array.isArray(x.bandsDb) && x.bandsDb.length === BAND_CENTERS.length && x.bandsDb.every(isNum);
+
+const isRoom = (x: unknown): x is RoomProfile =>
+  isObj(x) && isStr(x.id) && isStr(x.name) &&
+  Array.isArray(x.knownResonances) && x.knownResonances.every(isResonance) &&
+  isObj(x.references) &&
+  (x.references.music === undefined || isReference(x.references.music)) &&
+  (x.references.speech === undefined || isReference(x.references.speech));
+
 // ── Migrations: one function per version bump, applied in order ──
 
 /** v1 → v2: mixer profiles gained `outputs` (speakers + the EQ on them). */
@@ -74,6 +96,11 @@ function migrateV1(x: Obj): Obj {
   };
 }
 
+/** v2 → v3: rooms (acoustics + references) and the balance responsiveness setting. */
+function migrateV2(x: Obj): Obj {
+  return { ...x, version: 3, rooms: [], activeRoomId: null, balanceSpeed: 'normal' };
+}
+
 /**
  * Keeps every valid item. `dropped`: something had to be thrown away.
  * `migrated`: an older version was upgraded (caller backs up the original either way).
@@ -85,19 +112,30 @@ export function parse(input: unknown): { data: AppData; dropped: boolean; migrat
     x = migrateV1(x);
     migrated = true;
   }
-  if (!isObj(x) || x.version !== 2 || !Array.isArray(x.mixers) || !Array.isArray(x.bands)) {
+  if (isObj(x) && x.version === 2) {
+    x = migrateV2(x);
+    migrated = true;
+  }
+  if (!isObj(x) || x.version !== 3 || !Array.isArray(x.mixers) || !Array.isArray(x.bands) || !Array.isArray(x.rooms)) {
     return { data: defaults(), dropped: true, migrated };
   }
   const mixers = x.mixers.filter(isMixerProfile);
   const bands = x.bands.filter(isBandSetup);
-  let dropped = mixers.length !== x.mixers.length || bands.length !== x.bands.length;
+  const rooms = x.rooms.filter(isRoom);
+  let dropped = mixers.length !== x.mixers.length || bands.length !== x.bands.length || rooms.length !== x.rooms.length;
   if (mixers.length === 0) {
     mixers.push(defaults().mixers[0]);
     dropped = true;
   }
   const activeMixerId = mixers.some((m) => m.id === x.activeMixerId) ? (x.activeMixerId as string) : mixers[0].id;
   const activeBandId = bands.some((b) => b.id === x.activeBandId) ? (x.activeBandId as string) : null;
-  return { data: { version: 2, mixers, activeMixerId, bands, activeBandId }, dropped, migrated };
+  const activeRoomId = rooms.some((r) => r.id === x.activeRoomId) ? (x.activeRoomId as string) : null;
+  const balanceSpeed = Object.hasOwn(BALANCE_SPEEDS, x.balanceSpeed as string) ? (x.balanceSpeed as BalanceSpeed) : 'normal';
+  return {
+    data: { version: 3, mixers, activeMixerId, bands, activeBandId, rooms, activeRoomId, balanceSpeed },
+    dropped,
+    migrated,
+  };
 }
 
 export function load(storage: KeyValueStore = localStorage): { data: AppData; warning?: string } {
