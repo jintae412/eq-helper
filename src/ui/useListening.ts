@@ -4,6 +4,7 @@ import { FeedbackDetector } from '../analysis/feedback';
 import { FeedbackSession, type FeedbackSnapshot } from '../analysis/feedbackSession';
 import { BALANCE_SPEEDS, BandAverager, FRAMES_PER_SECOND, findIssues, toThirdOctaves, type BalanceSpeed } from '../analysis/balance';
 import { BalanceTracker, type BalanceSnapshot } from '../analysis/balanceTracker';
+import { frameLevelDb, LevelWindow } from '../analysis/dynamics';
 import type { ListenMode, RoomProfile } from '../advice/room';
 
 const ANALYSIS_INTERVAL_MS = 100; // detector thresholds assume ~10 frames/s
@@ -31,7 +32,8 @@ export function useListening(options: ListeningOptions) {
   const [feedback, setFeedback] = useState<FeedbackSnapshot>(EMPTY_FEEDBACK);
   const [balance, setBalance] = useState<BalanceSnapshot>(EMPTY_BALANCE);
   const [fill, setFill] = useState(0);
-  const [checked, setChecked] = useState(false); // at least one balance check ran on the current average
+  const [checked, setChecked] = useState(false);
+  const [speechSwingDb, setSpeechSwingDb] = useState<number | null>(null); // at least one balance check ran on the current average
   const [mode, setModeState] = useState<ListenMode>('music');
 
   const windowFrames = (s: BalanceSpeed) => BALANCE_SPEEDS[s].windowS * FRAMES_PER_SECOND;
@@ -39,10 +41,15 @@ export function useListening(options: ListeningOptions) {
   const session = useRef(new FeedbackSession());
   const averager = useRef(new BandAverager(windowFrames(options.speed)));
   const tracker = useRef(new BalanceTracker());
+  const levelSamples = (sp: BalanceSpeed) => BALANCE_SPEEDS[sp].windowS * (1000 / ANALYSIS_INTERVAL_MS);
+  const speechLevels = useRef(new LevelWindow(levelSamples(options.speed)));
   const live = useRef({ ...options, mode });
   live.current = { ...options, mode };
 
-  useEffect(() => averager.current.setMaxFrames(windowFrames(options.speed)), [options.speed]);
+  useEffect(() => {
+    averager.current.setMaxFrames(windowFrames(options.speed));
+    speechLevels.current.setMaxSamples(levelSamples(options.speed));
+  }, [options.speed]);
 
   useEffect(() => {
     if (!capture) return;
@@ -51,6 +58,9 @@ export function useListening(options: ListeningOptions) {
       const db = capture.read();
       const found = detector.current.update({ db, binHz: capture.binHz });
       if (session.current.update(found, performance.now())) setFeedback(session.current.snapshot());
+
+      // One voice in Speech mode = its dynamics are measurable from the room (a full band's aren't).
+      if (live.current.mode === 'speech' && !live.current.balancePaused) speechLevels.current.push(frameLevelDb(db, capture.binHz));
 
       if (++tick % TICKS_PER_BAND_FRAME !== 0 || live.current.balancePaused) return;
       const avg = averager.current;
@@ -68,6 +78,7 @@ export function useListening(options: ListeningOptions) {
       tracker.current.update(findings, Date.now(), speed.confirmations);
       setBalance(tracker.current.snapshot());
       setChecked(true);
+      if (o.mode === 'speech') setSpeechSwingDb(speechLevels.current.swingDb());
     }, ANALYSIS_INTERVAL_MS);
     return () => clearInterval(id);
   }, [capture]);
@@ -101,6 +112,8 @@ export function useListening(options: ListeningOptions) {
     setBalance(EMPTY_BALANCE);
     setFill(0);
     setChecked(false);
+    speechLevels.current.clear();
+    setSpeechSwingDb(null);
   }
 
   /** Music and speech sound different: restart the average, keep the session log. */
@@ -112,6 +125,8 @@ export function useListening(options: ListeningOptions) {
     setBalance(tracker.current.snapshot());
     setFill(0);
     setChecked(false);
+    speechLevels.current.clear();
+    setSpeechSwingDb(null);
   }
 
   function acknowledge(id: number) {
@@ -130,7 +145,7 @@ export function useListening(options: ListeningOptions) {
     return averager.current.fill >= REFERENCE_FILL ? averager.current.average() : null;
   }
 
-  return { capture, error, start, stop, feedback, acknowledge, dismiss, balance, fill, checked, mode, setMode, referenceCandidate };
+  return { capture, error, start, stop, feedback, acknowledge, dismiss, balance, fill, checked, speechSwingDb, mode, setMode, referenceCandidate };
 }
 
 export type Listening = ReturnType<typeof useListening>;

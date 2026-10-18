@@ -43,6 +43,21 @@ what order**: workflow, phases, task checklists, exit criteria, and known debt.
 
 Status key: ✅ done · 🚧 in progress · ⬜ not started
 
+**Current progress (2026-10-18):** phases 0–5 built (123 tests). iPhone-verified
+through phase 2; phase 3 and 4 real-world checks pending. Phase 2b (tuning) waiting on
+recordings. Next: phase 6 (ready for friends), or 2b once recordings exist.
+
+| Phase | Status |
+|---|---|
+| 0 Platform test | ✅ verified on iPhone (Record → share still unconfirmed) |
+| 1 Ask mode | ✅ verified on iPhone |
+| 2 Feedback alerts | ✅ verified on iPhone (synthetic tone) |
+| 2b Detector tuning | ⬜ needs recordings |
+| 3 Balance + rooms | ✅ built · iPhone check pending |
+| 4 Guided check + ring-out | ✅ built · iPhone check pending |
+| 5 Compressor advice | ✅ built · iPhone check pending |
+| 6 Ready for friends | ⬜ |
+
 ### ✅ Phase 0 — Platform test
 Goal: prove a free PWA can do the job on an iPhone.
 
@@ -117,13 +132,25 @@ Deferred until fixtures exist (feedback event, keys pad, held vocal note).
 - [ ] Manual iPhone check (real band at soundcheck)
 - **Exit:** synthetic tests pass; manual iPhone check; later: soloed-channel fixtures produce sensible per-source advice
 
-### ⬜ Phase 5 — Compressor advice
-- [ ] Mixer profile: per-channel compressor capability (schema bump + migration)
-- [ ] Dynamics on soloed channels (crest factor, level variance) → threshold / ratio / attack / release suggestions with "why"
-- **Exit:** reviewed by the experienced mixer
+### ✅ Phase 5 — Compressor advice (built; iPhone check pending)
+Constraint: the phone can't read the console's level scale, so **no threshold numbers**. Threshold
+is described by behavior ("until the meter shows 3–6 dB on the loudest lines"); make-up gain likewise.
+
+- [x] Mixer profile: channel compressor none / one knob / full controls (schema v5 + migration)
+- [x] Level swing (p95 − p10 of active 100 ms levels) measured during guided capture
+- [x] Recommend only when the swing is large for the source type; otherwise "dynamics are fine"
+- [x] Starting points per source (ratio / attack / release / target gain reduction) live in the knowledge base so they're part of the review
+- [x] Full controls → ratio, attack, release, threshold-by-meter, make-up; one knob → clock position + LED; none → mic technique + fader riding
+- [x] Always: "Compression is for experienced mixers. New to this? Skip it and ride the fader."
+- [x] Wedges + vocal/speech → feedback-risk note (stay ≤ 6 dB gain reduction)
+- [x] Redo shows before/after swing ("18 dB → 9 dB ✓")
+- [x] Cajón / e-kit / overheads: no advice unless the swing is extreme, and then only gentle
+- [x] Full mix: Speech mode only (one voice = measurable) → live "speaker's level swings a lot" card; Music mode explains why there's none
+- [ ] Manual iPhone check (guided check on a real singer; Speech mode during a talk)
+- **Exit:** synthetic tests pass; manual iPhone check; reviewed by the experienced mixer
 
 ### ⬜ Phase 6 — Ready for friends
-- [ ] Knowledge base review complete
+- [ ] Knowledge base review complete (EQ entries **and** compressor starting points)
 - [ ] PNG icons (180 px apple-touch-icon, 192/512 manifest)
 - [ ] "How to install" page with screenshots (Safari → Share → Add to Home Screen)
 - [ ] Accessibility pass (contrast, tap targets, VoiceOver labels)
@@ -142,6 +169,8 @@ Deferred until fixtures exist (feedback event, keys pad, held vocal note).
 
 - Balance trend uses a median of ±4 neighbors (found in phase 4: a mean hid half of a broad resonance; skipping shoulders flagged steep roll-offs). Re-check against fixtures.
 - Solo capture reuses the full-mix silence gate (−45 dBFS); a quiet soloed source might never fill the capture. Tune with soloed fixtures.
+
+- Swing thresholds per source (13 / 10 / 15 / 12 / 20 dB) are guesses; tune with soloed fixtures. Room reverb fills in soft passages, so the phone may under-read swing.
 
 ## 4. Open questions
 - Which exact mixers/monitor setups do bands use? (Generic presets cover it for now.)

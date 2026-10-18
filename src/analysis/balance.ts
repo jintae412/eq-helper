@@ -31,7 +31,7 @@ export const BALANCE_SPEEDS: Record<BalanceSpeed, { label: string; windowS: numb
 export const FRAMES_PER_SECOND = 2;
 
 // ponytail: fixed gate in dBFS; tune against recordings (phone at the board during music vs. empty room)
-const GATE_DB = -45;
+export const GATE_DB = -45;
 
 /** Rolling average of band power; skips quiet frames so pauses don't drag the average around. */
 export class BandAverager {

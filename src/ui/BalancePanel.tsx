@@ -5,6 +5,8 @@ import type { BandSetup } from '../advice/band';
 import { formatHz, type MixerProfile } from '../advice/mixer';
 import type { ListenMode, RoomProfile } from '../advice/room';
 import { MIN_FILL, REFERENCE_FILL, type Listening } from './useListening';
+import { compressorAdvice } from '../advice/compressorAdvice';
+import { CompressorCard } from './CompressorCard';
 
 interface Props {
   listening: Listening;
@@ -20,7 +22,9 @@ interface Props {
 const MAX_CARDS = 3;
 
 export function BalancePanel({ listening, mixer, band, room, speed, onSpeedChange, onSaveReference, onSaveResonance }: Props) {
-  const { capture, balance, fill, checked, mode } = listening;
+  const { capture, balance, fill, checked, mode, speechSwingDb } = listening;
+  const speaker = band?.sources.find((s) => s.type === 'speech-headset' || s.type === 'speech-handheld')?.type ?? 'speech-headset';
+  const speechComp = mode === 'speech' && speechSwingDb !== null ? compressorAdvice(speaker, speechSwingDb, mixer) : null;
   const reference = room?.references[mode];
   const windowS = BALANCE_SPEEDS[speed].windowS;
 
@@ -82,6 +86,11 @@ export function BalancePanel({ listening, mixer, band, room, speed, onSpeedChang
         <IssueCard key={issue.key} issue={issue} primary={i === 0} mixer={mixer} band={band} mode={mode}
           canSaveToRoom={!!room} onSaveResonance={onSaveResonance} />
       ))}
+
+      {speechComp && <CompressorCard advice={speechComp} />}
+      {mode === 'music' && capture && (
+        <p className="muted">Compressor tips show up in Speech mode (one voice) and in Guided check. With a full band, one mic can't tell who's getting louder.</p>
+      )}
 
       {room ? (
         <div className="row">

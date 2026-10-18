@@ -1,11 +1,11 @@
 import { MIC_LABELS, type BandSetup, type BandSource } from '../advice/band';
 import { SOURCE_TYPES, type SourceType } from '../advice/knowledgeBase';
-import { createFromPreset, defaultOutputs, MONITOR_LABELS, type EqBand, type MixerProfile, type RigOutputs } from '../advice/mixer';
+import { COMPRESSOR_LABELS, createFromPreset, defaultCompressor, defaultOutputs, MONITOR_LABELS, type EqBand, type MixerProfile, type RigOutputs } from '../advice/mixer';
 import type { KnownResonance, RoomProfile, RoomReference } from '../advice/room';
 import { BALANCE_SPEEDS, BAND_CENTERS, type BalanceSpeed } from '../analysis/balance';
 
 export interface AppData {
-  version: 4;
+  version: 5;
   mixers: MixerProfile[];
   activeMixerId: string;
   bands: BandSetup[];
@@ -26,7 +26,7 @@ type KeyValueStore = Pick<Storage, 'getItem' | 'setItem'>;
 export function defaults(): AppData {
   const mixer = createFromPreset('3-band', 'My mixer');
   return {
-    version: 4, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null,
+    version: 5, mixers: [mixer], activeMixerId: mixer.id, bands: [], activeBandId: null,
     rooms: [], activeRoomId: null, balanceSpeed: 'normal', guidedSeconds: GUIDED_SECONDS.default,
   };
 }
@@ -60,7 +60,7 @@ const isRigOutputs = (x: unknown): x is RigOutputs =>
 
 function isMixerProfile(x: unknown): x is MixerProfile {
   if (!isObj(x) || !isStr(x.id) || !isStr(x.name) || !Array.isArray(x.bands) || !x.bands.every(isEqBand)) return false;
-  if (!isRigOutputs(x.outputs)) return false;
+  if (!isRigOutputs(x.outputs) || !Object.hasOwn(COMPRESSOR_LABELS, x.compressor as string)) return false;
   return x.hpf === undefined || (isObj(x.hpf) && isPos(x.hpf.minHz) && isPos(x.hpf.maxHz) && x.hpf.minHz <= x.hpf.maxHz);
 }
 
@@ -113,6 +113,17 @@ function migrateV3(x: Obj): Obj {
   return { ...x, version: 4, guidedSeconds: GUIDED_SECONDS.default };
 }
 
+/** v4 → v5: mixer profiles gained a channel compressor type. */
+function migrateV4(x: Obj): Obj {
+  return {
+    ...x,
+    version: 5,
+    mixers: Array.isArray(x.mixers)
+      ? x.mixers.map((m) => (isObj(m) && Array.isArray(m.bands) ? { ...m, compressor: defaultCompressor(m.bands as { kind: string }[]) } : m))
+      : x.mixers,
+  };
+}
+
 /**
  * Keeps every valid item. `dropped`: something had to be thrown away.
  * `migrated`: an older version was upgraded (caller backs up the original either way).
@@ -132,7 +143,11 @@ export function parse(input: unknown): { data: AppData; dropped: boolean; migrat
     x = migrateV3(x);
     migrated = true;
   }
-  if (!isObj(x) || x.version !== 4 || !Array.isArray(x.mixers) || !Array.isArray(x.bands) || !Array.isArray(x.rooms)) {
+  if (isObj(x) && x.version === 4) {
+    x = migrateV4(x);
+    migrated = true;
+  }
+  if (!isObj(x) || x.version !== 5 || !Array.isArray(x.mixers) || !Array.isArray(x.bands) || !Array.isArray(x.rooms)) {
     return { data: defaults(), dropped: true, migrated };
   }
   const mixers = x.mixers.filter(isMixerProfile);
@@ -150,7 +165,7 @@ export function parse(input: unknown): { data: AppData; dropped: boolean; migrat
   const guidedSeconds = isNum(g) && g >= GUIDED_SECONDS.min && g <= GUIDED_SECONDS.max ? g : GUIDED_SECONDS.default;
   const balanceSpeed = Object.hasOwn(BALANCE_SPEEDS, x.balanceSpeed as string) ? (x.balanceSpeed as BalanceSpeed) : 'normal';
   return {
-    data: { version: 4, mixers, activeMixerId, bands, activeBandId, rooms, activeRoomId, balanceSpeed, guidedSeconds },
+    data: { version: 5, mixers, activeMixerId, bands, activeBandId, rooms, activeRoomId, balanceSpeed, guidedSeconds },
     dropped,
     migrated,
   };

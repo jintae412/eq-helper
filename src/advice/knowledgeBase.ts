@@ -340,6 +340,66 @@ export const KB: KbEntry[] = [
   },
 ];
 
+// ── Compressor starting points (part of the same review as the EQ entries) ──
+
+export interface CompressorStart {
+  ratio: number;
+  strongRatio?: number; // when the swing is very large
+  attack: string;
+  release: string;
+  reductionDb: [number, number]; // target gain reduction on the loudest passages
+  swingDb: number; // recommend compression only above this swing
+  gentleOnly?: boolean; // usually better uncompressed; only advise when the swing is extreme
+  why: string;
+}
+
+const VOICE_START: CompressorStart = {
+  ratio: 3, strongRatio: 4, attack: '10–20 ms', release: 'about 150 ms (or auto)', reductionDb: [3, 6], swingDb: 13,
+  why: 'Singers get much louder on big notes and softer on quiet lines. Gentle compression evens that out so you aren\'t riding the fader every phrase.',
+};
+
+const GENTLE_START: CompressorStart = {
+  ratio: 2, attack: '20–30 ms', release: 'auto', reductionDb: [2, 3], swingDb: 20, gentleOnly: true,
+  why: 'This usually sounds best uncompressed in a small room. The swing here is extreme, so a light touch helps.',
+};
+
+export const COMPRESSOR_STARTS: Partial<Record<SourceType, CompressorStart>> = {
+  'male-vocal': VOICE_START,
+  'female-vocal': VOICE_START,
+  'speech-headset': {
+    ratio: 2.5, attack: '10 ms', release: 'about 150 ms', reductionDb: [3, 6], swingDb: 13,
+    why: 'Speakers drop their voice for emphasis and get loud when excited. Light compression keeps every word at a listenable level.',
+  },
+  'speech-handheld': {
+    ratio: 2.5, attack: '10 ms', release: 'about 150 ms', reductionDb: [3, 6], swingDb: 13,
+    why: 'Handheld mic distance changes a lot while talking. Light compression smooths out the near/far level jumps.',
+  },
+  'acoustic-guitar': {
+    ratio: 2.5, attack: '15–25 ms (lets the strum through)', release: 'about 150 ms', reductionDb: [2, 4], swingDb: 10,
+    why: 'Strumming hard vs. picking softly can jump 10+ dB. A gentle squeeze keeps the guitar steady under the vocals without killing the strum.',
+  },
+  bass: {
+    ratio: 4, attack: '10–20 ms', release: 'about 200 ms', reductionDb: [3, 6], swingDb: 10,
+    why: 'Some bass notes ring out much louder than others. Compression keeps the low end steady so the groove sits evenly.',
+  },
+  keys: {
+    ratio: 2, attack: '20 ms', release: 'auto', reductionDb: [2, 3], swingDb: 15,
+    why: 'Keys are usually even. Only very uneven playing (soft pads jumping to loud chords) benefits from a light touch.',
+  },
+  kick: {
+    ratio: 4, attack: '20–30 ms (keeps the punch)', release: 'about 100 ms', reductionDb: [3, 6], swingDb: 12,
+    why: 'Evens out hit-to-hit level. The slower attack lets the initial thump through so it stays punchy.',
+  },
+  snare: {
+    ratio: 4, attack: '20–30 ms (keeps the crack)', release: 'about 100 ms', reductionDb: [3, 6], swingDb: 12,
+    why: 'Ghost notes and rimshots vary wildly. Compression evens them out while the slow attack keeps the crack.',
+  },
+  toms: GENTLE_START,
+  cajon: GENTLE_START,
+  'e-kit': GENTLE_START,
+  overheads: GENTLE_START,
+};
+
 export function lookup(source: SourceType, symptom: Symptom): KbEntry | undefined {
   return KB.find((e) => e.sources.includes(source) && e.symptoms.includes(symptom));
 }

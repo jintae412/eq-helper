@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { BandAverager, FRAMES_PER_SECOND, toThirdOctaves } from '../analysis/balance';
 import { analyzeSolo } from '../analysis/sourceCheck';
+import { frameLevelDb, LevelWindow } from '../analysis/dynamics';
+import { compressorAdvice, type CompressorAdvice } from '../advice/compressorAdvice';
+import { CompressorCard } from './CompressorCard';
 import { PeakFollower } from '../analysis/sweep';
 import type { BandSetup, BandSource } from '../advice/band';
 import { ringOutFix } from '../advice/feedbackAdvice';
@@ -24,19 +27,29 @@ type Step =
   | { kind: 'intro' }
   | { kind: 'prompt'; index: number }
   | { kind: 'capturing'; index: number }
-  | { kind: 'result'; index: number; items: SourceAdvice[] }
+  | { kind: 'result'; index: number; report: Report; previousSwingDb?: number }
   | { kind: 'summary' }
   | { kind: 'ringout-safety' }
   | { kind: 'ringout'; mic: number };
 
-type Result = SourceAdvice[] | 'skipped';
+interface Report {
+  items: SourceAdvice[];
+  comp: CompressorAdvice | null;
+}
+type Result = Report | 'skipped';
 
 const ADHOC_ID = 'adhoc';
 const VOICES: SourceType[] = ['male-vocal', 'female-vocal', 'speech-headset', 'speech-handheld'];
-const CAPTURE_TICK_MS = 1000 / FRAMES_PER_SECOND;
+const CAPTURE_TICK_MS = 100; // level every tick (for dynamics), bands every few ticks
+const TICKS_PER_BAND_FRAME = 1000 / CAPTURE_TICK_MS / FRAMES_PER_SECOND;
 const SILENCE_HINT_MS = 8000;
 const MAX_RINGS = 4;
 const SAME_RING_OCTAVES = 1 / 12;
+
+const reportLines = (r: Report) => [
+  ...r.items.map(summaryLine),
+  ...(r.comp?.needed ? [`Compressor (swing ${Math.round(r.comp.swingDb)} dB): ${r.comp.steps[0]}`] : []),
+];
 
 const verb = (t: SourceType) => (t.startsWith('speech') ? 'talk' : VOICES.includes(t) ? 'sing' : 'play');
 const nameOf = (s: BandSource) => s.label.trim() || SOURCE_LABELS[s.type];
@@ -70,7 +83,7 @@ export function GuidedCheck({ listening, mixer, band, seconds, onSecondsChange, 
     onSaveChecks(
       targets.flatMap((t, i) => {
         const r = updated[i];
-        return t.id === ADHOC_ID || !r || r === 'skipped' ? [] : [{ sourceId: t.id, notes: r.map(summaryLine) }];
+        return t.id === ADHOC_ID || !r || r === 'skipped' ? [] : [{ sourceId: t.id, notes: reportLines(r) }];
       }),
     );
     setStep({ kind: 'summary' });
@@ -137,7 +150,11 @@ export function GuidedCheck({ listening, mixer, band, seconds, onSecondsChange, 
 
     case 'capturing':
       return <Capturing key={step.index} listening={listening} source={targets[step.index]} seconds={seconds} mixer={mixer}
-        onDone={(items) => setStep({ kind: 'result', index: step.index, items })}
+        onDone={(report) => {
+          const prev = results[step.index];
+          setStep({ kind: 'result', index: step.index, report, previousSwingDb: prev && prev !== 'skipped' ? prev.comp?.swingDb : undefined });
+          setResults((r) => ({ ...r, [step.index]: report }));
+        }}
         onCancel={() => setStep({ kind: 'prompt', index: step.index })} />;
 
     case 'result': {
@@ -145,10 +162,11 @@ export function GuidedCheck({ listening, mixer, band, seconds, onSecondsChange, 
       return (
         <>
           <h2>{nameOf(t)}</h2>
-          {step.items.length === 0 && <p>Sounds balanced. Nothing sticks out.</p>}
-          {step.items.map((a) => <SourceCard key={a.title + a.detail} advice={a} listening={listening} />)}
+          {step.report.items.length === 0 && <p>EQ sounds balanced. Nothing sticks out.</p>}
+          {step.report.items.map((a) => <SourceCard key={a.title + a.detail} advice={a} listening={listening} />)}
+          {step.report.comp && <CompressorCard advice={step.report.comp} previousSwingDb={step.previousSwingDb} />}
           <div className="row">
-            <button onClick={() => next(step.index, step.items)}>{step.index + 1 < targets.length ? 'Next person' : 'Finish'}</button>
+            <button onClick={() => next(step.index, step.report)}>{step.index + 1 < targets.length ? 'Next person' : 'Finish'}</button>
             <button className="quiet" onClick={() => setStep({ kind: 'capturing', index: step.index })}>Redo</button>
           </div>
         </>
@@ -166,8 +184,8 @@ export function GuidedCheck({ listening, mixer, band, seconds, onSecondsChange, 
                 <li key={t.id}>
                   <strong>{nameOf(t)}</strong>:{' '}
                   {r === 'skipped' || !r ? <span className="muted">skipped</span>
-                    : r.length === 0 ? 'sounded fine'
-                    : <ul>{r.map((a) => <li key={a.title + a.detail}>{summaryLine(a)}</li>)}</ul>}
+                    : reportLines(r).length === 0 ? 'sounded fine'
+                    : <ul>{reportLines(r).map((line) => <li key={line}>{line}</li>)}</ul>}
                 </li>
               );
             })}
@@ -203,7 +221,7 @@ function LastCheckNote({ check }: { check: NonNullable<BandSource['lastCheck']> 
 
 function Capturing({ listening, source, seconds, mixer, onDone, onCancel }: {
   listening: Listening; source: BandSource; seconds: number; mixer: MixerProfile;
-  onDone: (items: SourceAdvice[]) => void; onCancel: () => void;
+  onDone: (report: Report) => void; onCancel: () => void;
 }) {
   const [progress, setProgress] = useState(0);
   const [hearNothing, setHearNothing] = useState(false);
@@ -214,15 +232,23 @@ function Capturing({ listening, source, seconds, mixer, onDone, onCancel }: {
     const capture = listening.capture;
     if (!capture) return;
     const avg = new BandAverager(seconds * FRAMES_PER_SECOND);
+    const levels = new LevelWindow(Number.MAX_SAFE_INTEGER);
     let lastHeard = Date.now();
+    let tick = 0;
     const id = setInterval(() => {
-      if (avg.push(toThirdOctaves(capture.read(), capture.binHz))) lastHeard = Date.now();
+      const db = capture.read();
+      levels.push(frameLevelDb(db, capture.binHz));
+      if (++tick % TICKS_PER_BAND_FRAME !== 0) return;
+      if (avg.push(toThirdOctaves(db, capture.binHz))) lastHeard = Date.now();
       setProgress(avg.fill);
       setHearNothing(Date.now() - lastHeard > SILENCE_HINT_MS);
-      if (avg.fill >= 1) {
-        clearInterval(id);
-        done.current(describeSolo(analyzeSolo(avg.average()!, HPF_CUTOFF[source.type]), source.type, mixer));
-      }
+      if (avg.fill < 1) return;
+      clearInterval(id);
+      const swing = levels.swingDb();
+      done.current({
+        items: describeSolo(analyzeSolo(avg.average()!, HPF_CUTOFF[source.type]), source.type, mixer),
+        comp: swing === null ? null : compressorAdvice(source.type, swing, mixer),
+      });
     }, CAPTURE_TICK_MS);
     return () => clearInterval(id);
   }, [listening.capture, seconds, source.type, mixer]);

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { SOURCE_LABELS, SOURCE_TYPES, type SourceType } from '../advice/knowledgeBase';
 import {
-  createFromPreset, MONITOR_LABELS, PRESETS,
-  type BandKind, type EqBand, type MixerProfile, type MonitorType, type PresetKind, type RigOutputs,
+  COMPRESSOR_LABELS, createFromPreset, MONITOR_LABELS, PRESETS,
+  type BandKind, type CompressorType, type EqBand, type MixerProfile, type MonitorType, type PresetKind, type RigOutputs,
 } from '../advice/mixer';
 import { MIC_LABELS, type BandSetup, type BandSource, type MicType } from '../advice/band';
 import type { AppData } from '../storage/store';
@@ -239,6 +239,15 @@ function MixerEditor({ mixer, onChange }: { mixer: MixerProfile; onChange: (m: M
         onClick={() => onChange({ ...mixer, bands: [...mixer.bands, { kind: 'sweep', label: 'MID', minHz: 100, maxHz: 8000, maxGainDb: 15 }] })}>
         Add knob
       </button>
+
+      <h3>Channel compressor</h3>
+      <label className="field">
+        What each channel has
+        <select value={mixer.compressor} onChange={(e) => onChange({ ...mixer, compressor: e.target.value as CompressorType })}>
+          {(Object.keys(COMPRESSOR_LABELS) as CompressorType[]).map((c) => <option key={c} value={c}>{COMPRESSOR_LABELS[c]}</option>)}
+        </select>
+      </label>
+      <p className="muted">Compression is for experienced mixers. Beginners can leave it alone.</p>
 
       <h3>Speakers &amp; monitors</h3>
       <p className="muted">Used to tailor feedback advice.</p>

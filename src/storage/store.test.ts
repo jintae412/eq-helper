@@ -72,7 +72,8 @@ describe('storage', () => {
     const s = memoryStorage({ [STORAGE_KEY]: raw });
     const { data, warning } = load(s);
     expect(warning).toBeUndefined();
-    expect(data.version).toBe(4);
+    expect(data.version).toBe(5);
+    expect(data.mixers.map((m) => m.compressor)).toEqual(['none', 'full']);
     expect(data.guidedSeconds).toBe(15);
     expect(data.rooms).toEqual([]);
     expect(data.balanceSpeed).toBe('normal');

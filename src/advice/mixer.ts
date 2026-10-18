@@ -27,13 +27,25 @@ export interface RigOutputs {
   outputPeq: boolean; // digital boards: parametric EQ on each output bus
 }
 
+export const COMPRESSOR_LABELS = {
+  none: 'None',
+  'one-knob': 'One COMP knob',
+  full: 'Full controls (threshold, ratio, attack…)',
+} as const;
+export type CompressorType = keyof typeof COMPRESSOR_LABELS;
+
 export interface MixerProfile {
   id: string;
   name: string;
   hpf?: Hpf;
   bands: EqBand[];
   outputs: RigOutputs;
+  compressor: CompressorType; // per channel
 }
+
+/** Digital boards have full channel compressors; analog ones vary, so assume none until told. */
+export const defaultCompressor = (bands: { kind: string }[]): CompressorType =>
+  bands.some((b) => b.kind === 'parametric') ? 'full' : 'none';
 
 /** Sensible guess: digital boards have output EQ; analog ones usually rely on an outboard graphic EQ, if any. */
 export const defaultOutputs = (bands: { kind: string }[]): RigOutputs => ({
@@ -53,7 +65,7 @@ export type Instruction =
 
 export type PresetKind = '3-band' | 'sweep-mid' | 'dual-sweep' | 'digital';
 
-export const PRESETS: Record<PresetKind, { label: string; profile: Omit<MixerProfile, 'id' | 'name' | 'outputs'> }> = {
+export const PRESETS: Record<PresetKind, { label: string; profile: Omit<MixerProfile, 'id' | 'name' | 'outputs' | 'compressor'> }> = {
   '3-band': {
     label: '3-band (LOW / MID / HIGH, no sweep)',
     profile: {
@@ -107,7 +119,7 @@ export const PRESETS: Record<PresetKind, { label: string; profile: Omit<MixerPro
 
 export function createFromPreset(kind: PresetKind, name: string, id: string = crypto.randomUUID()): MixerProfile {
   const profile = structuredClone(PRESETS[kind].profile);
-  return { id, name, ...profile, outputs: defaultOutputs(profile.bands) };
+  return { id, name, ...profile, outputs: defaultOutputs(profile.bands), compressor: defaultCompressor(profile.bands) };
 }
 
 // A fixed band more than ~1 octave away does more collateral damage than good.
