@@ -1,0 +1,126 @@
+# EQ Helper — Development Plan
+
+What we're building and why lives in [docs/SPEC.md](docs/SPEC.md). This file is **how and in
+what order**: workflow, phases, task checklists, exit criteria, and known debt.
+
+---
+
+## 1. Development workflow
+
+### Branching & review
+- `main` is always deployable. Every push to `main` deploys to GitHub Pages.
+- One branch per phase (or per sizeable feature): `phase-1-ask-mode`, `phase-2-feedback`, …
+- Open a PR into `main`. CI runs tests + typecheck + build on the PR; merge only when green.
+- Commits: imperative subject (`Add mixer translator`), body explains *why* when it isn't obvious.
+
+### CI/CD (`.github/workflows/deploy.yml`)
+- `test` job: on every push and PR → `npm ci`, `npm test`, `npm run build` (includes `tsc`).
+- `deploy` job: only on push to `main`, after `test` passes → GitHub Pages.
+
+### Testing strategy
+| Layer | How it's tested |
+|---|---|
+| `analysis/`, `advice/`, `storage/` (pure) | Vitest unit tests with synthetic data. Required for any branch/loop logic. |
+| Knowledge base | Invariant tests: every move inside its range, sane gain/Q, unique ids, unique (source, symptom) pairs, non-empty "why" |
+| Detection thresholds | Regression tests against recorded WAV fixtures (`fixtures/`), from phase 2 on |
+| `audio/`, UI | Manual checklist on a real iPhone (installed from home screen) + Mac Safari each phase |
+
+### Per-phase manual checklist (real iPhone, home-screen install)
+1. Launches, and launches again in airplane mode (offline).
+2. Mic starts on tap; settings readout still shows `echoCancellation: false`.
+3. New feature works with real audio / real use.
+4. Data survives closing and reopening the app.
+
+### Conventions
+- Pure code never imports browser APIs. Browser-coupled code stays in `src/audio/` and `src/ui/`.
+- Deliberate shortcuts get a `ponytail:` comment naming the limit and the upgrade path.
+- Saved data is versioned; schema changes ship with a migration and a test for it.
+- Audio never leaves the device. No analytics, no network calls besides loading the app.
+
+---
+
+## 2. Phases
+
+Status key: ✅ done · 🚧 in progress · ⬜ not started
+
+### ✅ Phase 0 — Platform test
+Goal: prove a free PWA can do the job on an iPhone.
+
+- [x] Vite + React + TS PWA, offline via service worker
+- [x] GitHub Pages deploy workflow
+- [x] Mic capture with browser processing off; applied-settings readout
+- [x] Live spectrum view
+- [x] Feedback detector (pure) + tests, live markers + "That wasn't feedback"
+- [x] WAV recorder via AudioWorklet + share/download
+- [x] Verified on iPhone: home-screen install, offline launch, `echoCancellation: false`, AGC off (tone-step test)
+- [ ] Verify Record → share sheet on iPhone
+- [ ] Collect fixtures (see SPEC: feedback event, keys pad, held vocal note, soloed channels, full mix)
+
+### ✅ Phase 1 — Ask mode (no audio needed)
+Goal: pick a source + symptom (or search), get advice translated to *your* mixer.
+
+- [x] Mixer profiles: generic presets (3-band, sweepable mid, dual sweepable mid, digital parametric), fully editable
+- [x] Translator: ideal EQ move → instruction for this mixer (exact / closest / unreachable), HPF moves
+- [x] Knowledge base v1 (~40 entries) with invariant tests
+- [x] Answer builder: Do this / Or try / Why / usual range; "Or try" first when unreachable
+- [x] Versioned localStorage with validation, per-item recovery, raw-data backup on failure
+- [x] Bottom tabs: Listen / Ask / Setup (Listen stays mounted so the mic keeps running)
+- [x] Setup: mixer profile editor, band setups (sources with optional mic type)
+- [x] CI runs tests on PRs
+- [ ] Manual iPhone checklist after deploy
+- **Exit:** useful with zero audio; manual checklist passes
+- **Later gate (before sharing widely):** experienced mixer reviews every knowledge base entry
+
+### ⬜ Phase 2 — Feedback in full-mix mode
+Goal: catch real feedback fast, tell them exactly what to do with *their* gear.
+
+- [ ] Schema v2: mixer outputs (graphic EQ on mains / monitors, parametric EQ on outputs) + monitor type (wedges / IEM / none); v1→v2 migration + test
+- [ ] Gear-aware feedback steps: likely culprit (frequency range + band mic types) → diagnostic → fix on available EQ (output PEQ → GEQ slider → channel EQ)
+- [ ] Full-screen red takeover, visible on **any** tab
+- [ ] Fixture harness: decode WAV in Node → FFT matching `AnalyserNode` (Blackman window, dB) → run detector
+- [ ] Tune thresholds (`harmonicRangeDb`, prominence, frames) until it catches recorded feedback and ignores recorded pads/held notes
+- [ ] Confidence that uses growth rate, not just duration
+- **Exit:** passes fixture regression; tested live at one soundcheck
+
+### ⬜ Phase 3 — Tonal balance + rooms
+- [ ] 1/3-octave band analysis of the full mix, smoothed over seconds
+- [ ] Generic target curve; then "This sounds good — save as reference" per room, reporting drift
+- [ ] Room profiles: label, known resonances ("Save to room" from findings), reference spectrum
+- [ ] Music / Speech toggle (different targets; speech = headset, highest feedback risk)
+- [ ] Lower confidence when the band includes a real kit
+- [ ] Top-issue card + two secondary cards
+- **Exit:** advice on recorded full-mix fixtures matches the spoken notes in them
+
+### ⬜ Phase 4 — Guided per-channel check
+- [ ] Mode toggle inside the Listen tab: Full mix / Guided check (no extra tab)
+- [ ] Walk through the active band's sources: "solo X, play 15 s" → per-source findings
+- [ ] Boost-and-sweep suggestions allowed **only** here
+- **Exit:** soloed-channel fixtures produce sensible per-source advice
+
+### ⬜ Phase 5 — Compressor advice
+- [ ] Mixer profile: per-channel compressor capability (schema bump + migration)
+- [ ] Dynamics on soloed channels (crest factor, level variance) → threshold / ratio / attack / release suggestions with "why"
+- **Exit:** reviewed by the experienced mixer
+
+### ⬜ Phase 6 — Ready for friends
+- [ ] Knowledge base review complete
+- [ ] PNG icons (180 px apple-touch-icon, 192/512 manifest)
+- [ ] "How to install" page with screenshots (Safari → Share → Add to Home Screen)
+- [ ] Accessibility pass (contrast, tap targets, VoiceOver labels)
+- [ ] Small friends beta, collect feedback
+
+---
+
+## 3. Known debt / backlog
+- `npm audit`: critical/moderate advisories in Vitest's tinypool/mocker (dev-only, not shipped).
+  Fix: upgrade local Node to 22 LTS → Vitest 5 + Vite 7.
+- iOS home-screen icon is SVG only (phase 6).
+- Recorder buffers in memory (~11 MB/min); stream to IndexedDB if long recordings are needed.
+- Feedback harmonic check is a 2×/3× heuristic; thresholds are guesses until fixtures exist.
+- Full-mix Ask answers assume a main graphic EQ until phase 2 adds output gear to profiles.
+- Shared vocal entries show both male/female hints (e.g. HPF note); split if it confuses people.
+- Feedback alerts only show on the Listen tab until phase 2's takeover.
+
+## 4. Open questions
+- Which exact mixers/monitor setups do bands use? (Generic presets cover it for now.)
+- Auto-detect speech vs music, or keep the manual toggle? (Manual for v1.)

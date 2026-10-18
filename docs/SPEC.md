@@ -46,9 +46,11 @@ Audio. Tested with synthetic spectra and with recorded soundchecks (`fixtures/`)
 ## Data model
 
 - **MixerProfile** — what EQ controls a given board has, per channel and per output.
-  Presets: 3-band analog (fixed), 4-band with sweepable mid, full parametric (digital).
-  Plus: HPF yes/no + frequency, graphic EQ on mains/monitors, parametric EQ on outputs.
-  Users save named ones ("Our Yamaha MG10", "Church X32").
+  Generic presets only (no model library — wrong per-model numbers = confidently bad advice):
+  3-band analog (fixed), sweepable mid, dual sweepable mids, digital parametric. Users edit
+  frequencies to match what's printed on their board and save named ones ("Our Yamaha").
+  Phase 1: HPF + channel EQ bands. Phase 2 adds outputs (graphic EQ on mains/monitors,
+  parametric EQ on outputs) via a schema migration.
 - **RoomProfile** — the venue: label, known resonances (`[{freqHz, note}]`, promoted from
   findings via "Save to room"), optional reference spectrum ("this sounds good" snapshot),
   monitor type (wedges / IEM / none).
@@ -56,6 +58,12 @@ Audio. Tested with synthetic spectra and with recorded soundchecks (`fixtures/`)
   (handheld dynamic, headset, condenser, DI).
 - **Session** (in memory) — Room + Band + MixerProfile (chosen per session, since bands bring
   their own) + session-scoped dismissals ("that wasn't feedback").
+
+## Navigation
+
+Bottom tabs: **Listen** / **Ask** / **Setup**. Listen stays mounted while other tabs are
+open so the mic and feedback detection keep running. Full mix vs guided check is a mode
+toggle *inside* Listen (same mic, same spectrum), not separate tabs.
 
 ## Modes
 
