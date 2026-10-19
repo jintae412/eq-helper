@@ -38,8 +38,31 @@ export const SYMPTOM_LABELS = {
   ringing: 'Ringing',
   plosives: 'Pops on P/B',
   overpowering: 'Overpowering others',
+  clicky: 'Too clicky',
 } as const;
 export type Symptom = keyof typeof SYMPTOM_LABELS;
+
+/** Plain-language "what does this word mean" for people new to mixing. */
+export const SYMPTOM_DESCRIPTIONS: Record<Symptom, string> = {
+  muddy: 'Thick and unclear, like the sound is wrapped in a wool blanket. Voices and instruments blur together and words are hard to pick out. Usually too much 200–400 Hz.',
+  boomy: 'Too much deep bass that rumbles and hangs around. Low notes sound like they\'re in a barrel and the low end feels flabby instead of tight. Usually 80–200 Hz.',
+  boxy: 'Hollow and closed in, like it\'s playing from inside a cardboard box. Usually 400–800 Hz.',
+  nasal: 'Like someone holding their nose, or talking through a megaphone or an old telephone. Usually around 1 kHz.',
+  harsh: 'Piercing and edgy. It hurts your ears, especially on loud parts, and you want to turn it down even when it isn\'t that loud. Usually 2–5 kHz.',
+  sibilant: '"S", "T" and "SH" sounds jump out with a hiss or whistle, louder than the rest of the word. Usually 5–8 kHz.',
+  thin: 'Small, weak or tinny, like it\'s coming out of a phone speaker. It\'s missing body and warmth. Usually not enough 100–250 Hz.',
+  dull: 'Muffled and dark, like there\'s a blanket over the speaker. No sparkle, crispness or "air". Usually not enough above 4 kHz.',
+  buried: 'You can see them playing but can\'t really hear them, or you can hear the voice but can\'t make out the words. Turning it up barely helps because other sounds are covering it.',
+  'string-noise': 'Pick scrapes, finger squeaks, fret clank or string zing are louder than the notes themselves. Sounds scratchy or jangly.',
+  quacky: 'A plastic, nasal, duck-like tone that doesn\'t sound like a real wooden guitar. Common with pickups plugged straight into the board.',
+  fizzy: 'A buzzy, sizzling hiss on top of a distorted guitar, like bacon frying. Usually 6–10 kHz.',
+  'no-definition': 'You can feel the bass but can\'t tell which notes are being played. It\'s just a low rumble.',
+  'no-punch': 'Drum hits feel soft and polite. No thump you feel in your chest and no snap.',
+  ringing: 'A drum hit leaves a "ping" or "boing" tone hanging after it, like a small bell.',
+  plosives: 'Loud thumps or pops on "P" and "B" sounds when a puff of breath hits the mic.',
+  overpowering: 'It covers everyone else. Other instruments and voices get lost behind it, even at a sensible volume.',
+  clicky: 'The kick is all slap and tick, like a pencil tapping a desk, and the click pokes out over the band. Usually 2–5 kHz.',
+};
 
 /** An EQ move plus where that problem usually lives, so the user can hunt nearby. */
 export type KbMove = EqMove & { rangeHz?: [number, number] };
@@ -128,6 +151,13 @@ export const KB: KbEntry[] = [
     nonEqFixes: ['Angle the mic so breath goes past it, not into it.', 'A foam windscreen helps a lot.'],
     why: 'P and B sounds are bursts of air hitting the mic, which shows up as low-frequency thumps. A high-pass filter removes most of it without touching the voice.',
   },
+  {
+    id: 'vocal-boomy', sources: VOCALS, symptoms: ['boomy'],
+    synonyms: ['bassy', 'rumbly', 'woofy', 'too much low end', 'chesty', 'proximity'],
+    moves: [hpf(100), eq(100, 200, 150, -3, 1.4)],
+    nonEqFixes: ['Have the singer back off the mic an inch or two. The closer they sing, the more bass the mic adds (proximity effect).'],
+    why: 'Below about 200 Hz a voice is mostly chest rumble and proximity boom, not words. Filtering and trimming it tightens the vocal and leaves the low end to bass and kick.',
+  },
   // ── Speech ──────────────────────────────────────────────────────────────
   {
     id: 'headset-muddy', sources: ['speech-headset'], symptoms: ['muddy', 'boomy'],
@@ -149,6 +179,41 @@ export const KB: KbEntry[] = [
     moves: [hpf(120), eq(200, 300, 250, -3, 1.4)],
     nonEqFixes: ['Have them hold the mic about a fist-width from the mouth.'],
     why: 'Talking close to a handheld boosts the lows (proximity effect). Speech intelligibility lives higher up, so trimming the lows only helps.',
+  },
+  {
+    id: 'handheld-speech-harsh', sources: ['speech-handheld'], symptoms: ['harsh'],
+    synonyms: ['piercing', 'shrill', 'edgy', 'shouty', 'hurts'],
+    moves: [eq(2500, 4000, 3000, -3, 2)],
+    nonEqFixes: ['If they get loud when excited, a little compression helps more than EQ.'],
+    why: 'Ears are most sensitive at 2.5–4 kHz. A raised speaking voice piles energy there, so a small cut keeps them clear without the sting.',
+  },
+  {
+    id: 'handheld-speech-thin', sources: ['speech-handheld'], symptoms: ['thin'],
+    synonyms: ['weak', 'small', 'tinny', 'far away', 'distant'],
+    moves: [eq(150, 250, 200, 2, 1.4)],
+    nonEqFixes: ['Usually the mic is too far away. Ask them to hold it about a fist-width from the mouth, pointed at it.', 'Check the HPF isn\'t set too high.'],
+    why: 'Holding a handheld at chest height loses the voice\'s body. Distance is the real fix, and a small boost at 150–250 Hz restores some warmth meanwhile.',
+  },
+  {
+    id: 'speech-sibilant', sources: ['speech-headset', 'speech-handheld'], symptoms: ['sibilant'],
+    synonyms: ['s sounds', 'esses', 'hissy', 'spitty', 'whistly'],
+    moves: [eq(5000, 9000, 7000, -3, 4)],
+    nonEqFixes: [
+      'Headset: move the mic element a little further back toward the cheek, out of the direct breath stream.',
+      'Handheld: hold the mic slightly below the chin, pointing up at the mouth, rather than straight in front of it.',
+    ],
+    why: '"S" and "T" sounds sit in a narrow band around 5–9 kHz, and headsets placed right at the mouth exaggerate them. A narrow cut tames the hiss without dulling the voice.',
+  },
+  {
+    id: 'speech-unclear', sources: ['speech-headset', 'speech-handheld'], symptoms: ['dull', 'buried'],
+    synonyms: ['muffled', 'hard to understand', 'can\'t understand', 'mumbly', 'unclear words', 'lost words', 'not intelligible'],
+    moves: [eq(200, 400, 300, -2, 1.4), eq(2000, 5000, 3000, 2, 1.4)],
+    nonEqFixes: [
+      'Turn background music or pads down while they talk.',
+      'Check the mic placement: a headset at the corner of the mouth, a handheld about a fist-width away.',
+      'Headset tucked under hair, a scarf or a beard? Move it clear.',
+    ],
+    why: 'Words are carried by consonants at 2–5 kHz, and low-mid mud at 200–400 Hz covers them up. Trimming one and gently lifting the other makes speech easier to follow without just making it louder.',
   },
   // ── Acoustic guitar ─────────────────────────────────────────────────────
   {
@@ -186,6 +251,27 @@ export const KB: KbEntry[] = [
     nonEqFixes: ['Cut 200–300 Hz on the acoustic instead of turning it up. Less mud often reads as more presence.'],
     why: 'Sparkle at 3–5 kHz cuts through a band better than volume does. Volume mostly adds low-mid mud.',
   },
+  {
+    id: 'acoustic-boxy', sources: ['acoustic-guitar'], symptoms: ['boxy'],
+    synonyms: ['cardboard', 'hollow', 'closed in', 'honky'],
+    moves: [eq(400, 900, 600, -3, 2)],
+    nonEqFixes: ['If it has a mic, aim it at where the neck meets the body (around the 12th–14th fret), not the soundhole.'],
+    why: 'The guitar\'s body can build up a hollow, boxy tone around 400–900 Hz. A modest cut makes it sound more open and natural.',
+  },
+  {
+    id: 'acoustic-thin', sources: ['acoustic-guitar'], symptoms: ['thin'],
+    synonyms: ['tinny', 'small', 'no body', 'weak', 'brittle'],
+    moves: [eq(150, 300, 200, 2, 1.4)],
+    nonEqFixes: ['Check the HPF isn\'t set too high (80–90 Hz is plenty).', 'Piezo pickups often sound thin. If the guitar has a blend knob, add some of its internal mic.'],
+    why: 'An acoustic\'s warmth lives around 150–300 Hz. A small boost gives it body. Go easy: it\'s the same range that turns into mud with the vocals.',
+  },
+  {
+    id: 'acoustic-dull', sources: ['acoustic-guitar'], symptoms: ['dull'],
+    synonyms: ['dark', 'muffled', 'dead strings', 'no sparkle', 'lifeless'],
+    moves: [eq(8000, 12000, 10000, 2, 0.7)],
+    nonEqFixes: ['Old strings sound dull and no EQ fully fixes that. Fresh strings make a big difference.'],
+    why: 'Shimmer and sparkle sit above 8 kHz. A gentle, broad lift brings it back without adding pick scratch.',
+  },
   // ── Electric guitar ─────────────────────────────────────────────────────
   {
     id: 'electric-muddy', sources: ['electric-guitar'], symptoms: ['muddy', 'boomy'],
@@ -207,6 +293,27 @@ export const KB: KbEntry[] = [
     moves: [eq(6000, 10000, 8000, -4, 0.7)],
     nonEqFixes: [],
     why: 'Amp and pedal fizz above 6 kHz adds nothing musical. Rolling it off smooths the guitar.',
+  },
+  {
+    id: 'electric-nasal', sources: ['electric-guitar'], symptoms: ['nasal'],
+    synonyms: ['honky', 'boxy', 'midrangy', 'cocked wah', 'telephone'],
+    moves: [eq(500, 1200, 800, -3, 2)],
+    nonEqFixes: [],
+    why: 'Some amps and pedals pile up a honk around 500 Hz–1.2 kHz. A small cut keeps the guitar\'s character while taking off the megaphone edge.',
+  },
+  {
+    id: 'electric-thin', sources: ['electric-guitar'], symptoms: ['thin'],
+    synonyms: ['weak', 'small', 'tinny', 'no body', 'fizzy and thin'],
+    moves: [eq(150, 300, 200, 2, 1.4)],
+    nonEqFixes: ['Move the amp mic a little toward the edge of the speaker cone for a warmer sound.', 'Ask the guitarist to add some bass or mids on the amp itself.'],
+    why: 'Body and chunk sit around 150–300 Hz. A small boost fills the guitar out. Don\'t overdo it, or it starts fighting the bass.',
+  },
+  {
+    id: 'electric-buried', sources: ['electric-guitar'], symptoms: ['buried'],
+    synonyms: ['lost', 'can\'t hear', 'masked', 'disappears'],
+    moves: [eq(1000, 3000, 1500, 2, 1.4)],
+    nonEqFixes: ['Better: cut 1–3 kHz a little on keys or acoustic so the electric has its own space.'],
+    why: 'An electric guitar\'s bite lives at 1–3 kHz. That\'s what lets it cut through, and volume alone mostly adds mud.',
   },
   // ── Bass ────────────────────────────────────────────────────────────────
   {
@@ -230,6 +337,20 @@ export const KB: KbEntry[] = [
     nonEqFixes: [],
     why: 'Small PA speakers can\'t reproduce deep lows, so people actually hear bass through its growl and attack around 700 Hz–1 kHz.',
   },
+  {
+    id: 'bass-thin', sources: ['bass'], symptoms: ['thin'],
+    synonyms: ['weak', 'no bottom', 'no low end', 'small'],
+    moves: [eq(60, 120, 80, 3, 1.4)],
+    nonEqFixes: ['Walk to the middle of the room before boosting. The low end at the board can be very different.', 'Check the bass channel\'s HPF is off.'],
+    why: 'A bass\'s weight lives at 60–120 Hz. If that\'s missing it feels weak. Small speakers can only do so much here, so check by ear in the room first.',
+  },
+  {
+    id: 'bass-string-noise', sources: ['bass'], symptoms: ['string-noise'],
+    synonyms: ['clanky', 'clank', 'fret noise', 'clicky', 'twangy', 'rattle'],
+    moves: [eq(2000, 5000, 3000, -3, 1.4)],
+    nonEqFixes: ['A bass plugged straight into the board picks up every fret buzz. Ask them to roll the tone knob back a little.'],
+    why: 'String and fret clank live at 2–5 kHz, right where ears are sensitive. A small cut keeps the growl and loses the clatter.',
+  },
   // ── Keys ────────────────────────────────────────────────────────────────
   {
     id: 'keys-muddy', sources: ['keys'], symptoms: ['muddy', 'boomy'],
@@ -251,6 +372,30 @@ export const KB: KbEntry[] = [
     moves: [eq(3000, 5000, 4000, -3, 2)],
     nonEqFixes: [],
     why: 'Digital piano samples are often bright at 3–5 kHz. Softening this makes them sit back in the mix.',
+  },
+  {
+    id: 'keys-boxy', sources: ['keys'], symptoms: ['boxy'],
+    synonyms: ['cardboard', 'hollow', 'honky', 'cheap'],
+    moves: [eq(400, 800, 500, -3, 2)],
+    nonEqFixes: [],
+    why: 'Some piano and organ sounds build up a hollow tone around 400–800 Hz. A modest cut makes them sound bigger and more open.',
+  },
+  {
+    id: 'keys-thin', sources: ['keys'], symptoms: ['thin'],
+    synonyms: ['weak', 'small', 'tinny', 'no body'],
+    moves: [eq(100, 250, 150, 2, 1.4)],
+    nonEqFixes: [
+      'Check you\'re getting the right output. One side of a stereo keyboard (L only) can sound thin, so use the mono output or both L and R.',
+      'Check the keyboard\'s own EQ or patch isn\'t set thin.',
+    ],
+    why: 'Piano body sits around 100–250 Hz. A small boost restores weight. With a bass player present, keep it subtle so they don\'t clash.',
+  },
+  {
+    id: 'keys-dull', sources: ['keys'], symptoms: ['dull'],
+    synonyms: ['dark', 'muffled', 'lifeless', 'no sparkle'],
+    moves: [eq(5000, 10000, 7000, 2, 0.7)],
+    nonEqFixes: ['Many keyboards have a brightness or tone control. Try that first.'],
+    why: 'Hammer attack and sparkle sit above 5 kHz. A gentle, broad lift brings the keys forward without making them harsh.',
   },
   // ── Drums ───────────────────────────────────────────────────────────────
   {
@@ -316,6 +461,97 @@ export const KB: KbEntry[] = [
     nonEqFixes: [],
     why: 'E-kit samples are often hyped at 3–5 kHz. Softening this makes them sound more natural in a room.',
   },
+  {
+    id: 'cajon-dull', sources: ['cajon'], symptoms: ['dull'],
+    synonyms: ['no slap', 'no snap', 'no crack', 'dead', 'muffled'],
+    moves: [eq(2000, 5000, 3000, 2, 1.4)],
+    nonEqFixes: ['If it\'s only mic\'d at the back port, add a mic on the front (playing) face for the slap.'],
+    why: 'The cajón\'s slap and snare-wire buzz live at 2–5 kHz. A small lift brings back the "snare" half of the instrument.',
+  },
+  {
+    id: 'kick-boomy', sources: ['kick'], symptoms: ['boomy'],
+    synonyms: ['woofy', 'too much low end', 'flabby', 'rumbly', 'basketball'],
+    moves: [eq(80, 150, 100, -3, 1.4)],
+    nonEqFixes: ['In a small room the kick often needs less low end than you\'d think. Try the fader down first.', 'A small pillow or blanket inside the drum tightens the boom.'],
+    why: 'Kick boom at 80–150 Hz excites small rooms and smears the groove. Trimming it leaves the deep thump (60–80 Hz) and the click.',
+  },
+  {
+    id: 'kick-clicky', sources: ['kick'], symptoms: ['clicky'],
+    synonyms: ['too much click', 'slappy', 'ticky', 'pointy', 'clacky'],
+    moves: [eq(2000, 5000, 3500, -3, 1.4)],
+    nonEqFixes: ['A felt beater instead of a plastic or wood one softens the click.'],
+    why: 'Beater click lives at 2–5 kHz. A little helps the kick be heard on small speakers, but too much pokes out like a metronome.',
+  },
+  {
+    id: 'snare-boxy', sources: ['snare'], symptoms: ['boxy', 'muddy'],
+    synonyms: ['cardboard', 'papery', 'hollow', 'honky'],
+    moves: [eq(400, 900, 600, -3, 1.4)],
+    nonEqFixes: [],
+    why: 'Snares get a boxy, honky tone around 400–900 Hz. A cut there leaves the body (around 200 Hz) and the crack.',
+  },
+  {
+    id: 'snare-thin', sources: ['snare'], symptoms: ['thin'],
+    synonyms: ['no body', 'weak', 'small', 'tinny', 'no fat'],
+    moves: [eq(150, 250, 200, 2, 1.4)],
+    nonEqFixes: ['Point the mic at the center of the head, about two fingers above the rim.'],
+    why: 'A snare\'s body and fatness live around 150–250 Hz. A small boost gives it weight without making it boomy.',
+  },
+  {
+    id: 'snare-dull', sources: ['snare'], symptoms: ['dull'],
+    synonyms: ['no crack', 'no snap', 'muffled', 'dead', 'flat'],
+    moves: [eq(3000, 6000, 4000, 2, 1.4)],
+    nonEqFixes: ['A snare that\'s over-dampened (lots of gel or tape) sounds dead. Take some off.'],
+    why: 'The snare\'s crack sits at 3–6 kHz. A small boost brings back the snap that makes the backbeat feel alive.',
+  },
+  {
+    id: 'snare-harsh', sources: ['snare'], symptoms: ['harsh'],
+    synonyms: ['too much hi-hat', 'hat bleed', 'sizzly', 'trashy'],
+    moves: [eq(5000, 10000, 7000, -3, 1.4)],
+    nonEqFixes: ['Aim the snare mic so its back points at the hi-hat. Most mics reject sound from behind.'],
+    why: 'The hi-hat sits right next to the snare and bleeds into its mic above 5 kHz. Cutting there tames the wash without losing the snare\'s crack.',
+  },
+  {
+    id: 'toms-boomy', sources: ['toms'], symptoms: ['boomy'],
+    synonyms: ['woofy', 'rumbly', 'too much low end', 'thuddy'],
+    moves: [eq(80, 150, 100, -3, 1.4)],
+    nonEqFixes: ['If your mixer has gates, a gate on the tom channels stops them booming and picking up the kit between hits.'],
+    why: 'Floor toms especially boom at 80–150 Hz in small rooms. A small cut keeps them big without muddying the bass and kick.',
+  },
+  {
+    id: 'toms-dull', sources: ['toms'], symptoms: ['dull', 'no-punch'],
+    synonyms: ['no attack', 'no stick', 'soft', 'muffled', 'flat'],
+    moves: [eq(3000, 6000, 4000, 2, 1.4)],
+    nonEqFixes: [],
+    why: 'The stick attack on toms is at 3–6 kHz. A small lift makes fills cut through without turning them up.',
+  },
+  {
+    id: 'overheads-muddy', sources: ['overheads'], symptoms: ['muddy', 'boomy'],
+    synonyms: ['washy', 'cloudy', 'roomy', 'kit mud'],
+    moves: [hpf(300), eq(300, 600, 400, -3, 1.4)],
+    nonEqFixes: ['Aim the overheads at the cymbals, not down at the drums.'],
+    why: 'The overheads mostly pick up the whole kit and the room below about 600 Hz. In a small room that\'s just extra mud, so let the close mics handle the drums.',
+  },
+  {
+    id: 'overheads-dull', sources: ['overheads'], symptoms: ['dull'],
+    synonyms: ['no shimmer', 'no sparkle', 'dark cymbals', 'muffled'],
+    moves: [eq(8000, 14000, 10000, 2, 0.7)],
+    nonEqFixes: ['Cymbals usually carry fine in a small room by themselves. Mute the overheads to compare before boosting.'],
+    why: 'Cymbal shimmer lives above 8 kHz. A broad, gentle lift adds sparkle without the clang at 2–5 kHz.',
+  },
+  {
+    id: 'ekit-boomy', sources: ['e-kit'], symptoms: ['boomy', 'muddy'],
+    synonyms: ['woofy', 'too much kick', 'rumbly', 'thuddy'],
+    moves: [eq(80, 200, 120, -3, 1.4)],
+    nonEqFixes: ['E-kit kick samples are often made for headphones, with huge low end. Turn the kick down in the module\'s own mixer.'],
+    why: 'Sampled kicks and toms often carry far more 80–200 Hz than a real kit. Through a PA in a small room that booms, so a small cut tightens it.',
+  },
+  {
+    id: 'ekit-thin', sources: ['e-kit'], symptoms: ['thin'],
+    synonyms: ['weak', 'small', 'tinny', 'toy'],
+    moves: [eq(150, 300, 200, 2, 1.4)],
+    nonEqFixes: ['Check you\'re getting both module outputs (L and R) or the mono output. One side of a stereo kit can be missing drums.'],
+    why: 'Drum body lives around 150–300 Hz. If the kit sounds like a toy, a small boost there gives it some weight.',
+  },
   // ── Whole mix (main graphic EQ) ─────────────────────────────────────────
   {
     id: 'mix-muddy', sources: ['full-mix'], symptoms: ['muddy'],
@@ -337,6 +573,27 @@ export const KB: KbEntry[] = [
     moves: [eq(2000, 4000, 2500, -2, 1.4)],
     nonEqFixes: ['Often it\'s just too loud overall. Try the master down 3 dB first.'],
     why: 'Ears are most sensitive at 2–4 kHz and fatigue quickly there. A small cut on the mains makes a loud mix feel more comfortable.',
+  },
+  {
+    id: 'mix-boxy', sources: ['full-mix'], symptoms: ['boxy', 'nasal'],
+    synonyms: ['hollow', 'honky', 'cardboard', 'megaphone', 'telephone'],
+    moves: [eq(400, 1000, 630, -2, 1.4)],
+    nonEqFixes: ['Find the culprit by muting channels one at a time. Fixing that one channel beats EQing everything.'],
+    why: 'A buildup around 400 Hz–1 kHz makes the whole room sound like a cardboard box. A gentle dip on the mains opens it up.',
+  },
+  {
+    id: 'mix-thin', sources: ['full-mix'], symptoms: ['thin'],
+    synonyms: ['weak', 'no bass', 'no low end', 'tinny', 'small'],
+    moves: [eq(80, 200, 125, 2, 1.4)],
+    nonEqFixes: ['Bring up the bass and kick faders first.', 'Check the bass and kick channels don\'t have the HPF on.'],
+    why: 'Without enough 80–200 Hz the mix feels small and lacks a pulse. Usually it\'s a channel level, so fix that first, then nudge the mains.',
+  },
+  {
+    id: 'mix-dull', sources: ['full-mix'], symptoms: ['dull'],
+    synonyms: ['muffled', 'dark', 'lifeless', 'no sparkle', 'flat'],
+    moves: [eq(6000, 12000, 8000, 2, 0.7)],
+    nonEqFixes: ['Check the speakers aren\'t blocked, or pointed at the floor or the back wall.', 'Check the HIGH knobs on the vocal channels aren\'t turned down.'],
+    why: 'Above 6 kHz is where crispness and "air" live. High frequencies are the first to get lost in a room, so a gentle lift on the mains brings back clarity.',
   },
 ];
 

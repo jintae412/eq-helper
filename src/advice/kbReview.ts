@@ -1,5 +1,6 @@
-import { COMPRESSOR_STARTS, KB, SOURCE_LABELS, SYMPTOM_LABELS, type KbMove, type SourceType } from './knowledgeBase';
+import { COMPRESSOR_STARTS, KB, SOURCE_LABELS, SYMPTOM_DESCRIPTIONS, SYMPTOM_LABELS, type KbMove, type SourceType, type Symptom } from './knowledgeBase';
 import { formatHz } from './mixer';
+import { REFERENCE } from './reference';
 
 // Markdown table cells can't contain raw pipes or newlines.
 const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\n/g, ' ');
@@ -34,6 +35,16 @@ export function renderKbReview(): string {
     '',
   ].map(cell).join(' | '));
 
+  const glossaryRows = (Object.entries(SYMPTOM_DESCRIPTIONS) as [Symptom, string][]).map(([s, d]) =>
+    ['☐', SYMPTOM_LABELS[s], d, ''].map(cell).join(' | '));
+
+  const referenceSections = (Object.entries(REFERENCE) as [SourceType, (typeof REFERENCE)[SourceType]][]).map(([source, rows]) =>
+    `### ${SOURCE_LABELS[source]}
+
+| OK | Range | What lives here | Boost when | Cut when | Notes |
+|---|---|---|---|---|---|
+${rows.map((r) => `| ${['☐', `${formatHz(r.hz[0])}–${formatHz(r.hz[1])}`, r.name, r.boost, r.cut, ''].map(cell).join(' | ')} |`).join('\n')}`).join('\n\n');
+
   return `# EQ Helper: knowledge base review
 
 > Generated from the app's data by \`npm run kb:review\`. Don't edit by hand; send notes back
@@ -60,5 +71,19 @@ Compression is only suggested when the measured level swing is above the "Sugges
 | OK | Source | Ratio | Attack | Release | Target gain reduction | Suggest when swing | Why | Notes |
 |---|---|---|---|---|---|---|---|---|
 ${compRows.map((r) => `| ${r} |`).join('\n')}
+
+## Symptom glossary
+
+Shown on the Ask tab so people new to mixing know what each word means.
+
+| OK | Symptom | Description | Notes |
+|---|---|---|---|
+${glossaryRows.map((r) => `| ${r} |`).join('\n')}
+
+## Reference charts
+
+The Reference tab: where each source's sound lives and when to boost or cut there.
+
+${referenceSections}
 `;
 }

@@ -33,9 +33,9 @@ describe('describeSolo', () => {
   });
 
   it('falls back to a generic cut for bumps the knowledge base does not cover', () => {
-    const [a] = describeSolo({ bumps: [bump(2000, 'presence')], lowVsBodyDb: null, needsHpf: false }, 'bass', sweep);
+    const [a] = describeSolo({ bumps: [bump(1500, 'upper-mid')], lowVsBodyDb: null, needsHpf: false }, 'bass', sweep);
     expect(a.title).toBe('Resonance');
-    expect(summaryLine(a)).toBe('Resonance (+6 dB around 2 kHz): Set MID frequency to 2 kHz, then turn MID down 3 dB.');
+    expect(summaryLine(a)).toBe('Resonance (+6 dB around 1.5 kHz): Set MID frequency to 1.5 kHz, then turn MID down 3 dB.');
   });
 });
 

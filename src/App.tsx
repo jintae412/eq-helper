@@ -9,10 +9,12 @@ import { InstallCard, StartHere } from './ui/Help';
 import type { SourceType } from './advice/knowledgeBase';
 import { AskScreen } from './ui/AskScreen';
 import { SetupScreen } from './ui/SetupScreen';
+import { ReferenceScreen } from './ui/ReferenceScreen';
 
 const TABS = [
   { id: 'listen', label: 'Listen' },
   { id: 'ask', label: 'Ask' },
+  { id: 'reference', label: 'Reference' },
   { id: 'setup', label: 'Setup' },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
@@ -99,6 +101,9 @@ export function App() {
         </section>
         <section hidden={tab !== 'ask'}>
           <AskScreen mixer={mixer} band={band} onGoToSetup={() => setTab('setup')} />
+        </section>
+        <section hidden={tab !== 'reference'}>
+          <ReferenceScreen />
         </section>
         <section hidden={tab !== 'setup'}>
           <SetupScreen data={data} update={update} />

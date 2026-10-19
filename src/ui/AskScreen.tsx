@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { buildAnswer } from '../advice/ask';
 import {
-  lookup, search, SOURCE_LABELS, SOURCE_TYPES, SYMPTOM_LABELS, symptomsFor,
+  lookup, search, SOURCE_LABELS, SOURCE_TYPES, SYMPTOM_DESCRIPTIONS, SYMPTOM_LABELS, symptomsFor,
   type KbEntry, type SourceType, type Symptom,
 } from '../advice/knowledgeBase';
 import type { MixerProfile } from '../advice/mixer';
@@ -77,6 +77,17 @@ export function AskScreen({ mixer, band, onGoToSetup }: Props) {
               </button>
             ))}
           </div>
+          <details>
+            <summary>What do these words mean?</summary>
+            <dl className="glossary">
+              {symptoms.map((s) => (
+                <div key={s}>
+                  <dt>{SYMPTOM_LABELS[s]}</dt>
+                  <dd>{SYMPTOM_DESCRIPTIONS[s]}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
         </>
       )}
 
@@ -93,6 +104,7 @@ export function AskScreen({ mixer, band, onGoToSetup }: Props) {
       {query.trim() && entries.length === 0 && (
         <p className="muted">No match. Try a simpler word like muddy, boomy, harsh, or thin, or pick from the buttons.</p>
       )}
+      <p className="muted">Squealing or howling? That's feedback: the Listen tab catches it and tells you what to pull down.</p>
       <div ref={answersRef}>
         {entries.map((e) => (
           <AnswerCard key={e.id} entry={e} source={source?.type ?? e.sources[0]} mixer={mixer} />
@@ -115,6 +127,11 @@ function AnswerCard({ entry, source, mixer }: { entry: KbEntry; source: SourceTy
       <h2>
         {SOURCE_LABELS[source]}: {entry.symptoms.map((s) => SYMPTOM_LABELS[s]).join(' / ')}
       </h2>
+      {entry.symptoms.map((s) => (
+        <p key={s} className="muted">
+          {entry.symptoms.length > 1 && <strong>{SYMPTOM_LABELS[s]}: </strong>}{SYMPTOM_DESCRIPTIONS[s]}
+        </p>
+      ))}
       {!a.reachable && orTry}
       <h3>Do this</h3>
       <ol>{a.steps.map((s) => <li key={s}>{s}</li>)}</ol>
