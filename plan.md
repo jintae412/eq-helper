@@ -43,7 +43,7 @@ what order**: workflow, phases, task checklists, exit criteria, and known debt.
 
 Status key: ✅ done · 🚧 in progress · ⬜ not started
 
-**Current progress (2026-10-18):** phases 0–5 built (123 tests). iPhone-verified
+**Current progress (2026-10-18):** phases 0–6 app work built (125 tests). Toolchain: Node 24 LTS, Vite 8, Vitest 5, 0 audit issues. iPhone-verified
 through phase 2; phase 3 and 4 real-world checks pending. Phase 2b (tuning) waiting on
 recordings. Next: phase 6 (ready for friends), or 2b once recordings exist.
 
@@ -163,8 +163,7 @@ is described by behavior ("until the meter shows 3–6 dB on the loudest lines")
 ---
 
 ## 3. Known debt / backlog
-- `npm audit`: critical/moderate advisories in Vitest's tinypool/mocker (dev-only, not shipped).
-  Fix: upgrade local Node to 22 LTS → Vitest 5 + Vite 7.
+- TypeScript 7 (native compiler rewrite) is out; staying on 5.x for now. Upgrade separately when convenient.
 - Recorder buffers in memory (~11 MB/min); stream to IndexedDB if long recordings are needed.
 - Feedback harmonic check is a 2×/3× heuristic; thresholds are guesses until fixtures exist.
 - Full-mix Ask answers assume a main graphic EQ until phase 2 adds output gear to profiles.
