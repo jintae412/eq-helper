@@ -22,6 +22,15 @@ describe('compressorAdvice', () => {
     expect(a.notes).toEqual([ADVANCED_NOTE, FEEDBACK_NOTE]);
   });
 
+  it('mentions the knee only where the compressor has full controls', () => {
+    expect(compressorAdvice('female-vocal', 16, digital)!.steps[1]).toBe('Attack 20–40 ms, release 150–300 ms (or auto), soft knee if it has that setting.');
+    expect(compressorAdvice('female-vocal', 16, oneKnob)!.steps.join(' ')).not.toContain('knee');
+  });
+
+  it('gives clean electric guitar a starting point', () => {
+    expect(compressorAdvice('electric-guitar', 20, digital)!.steps[0]).toBe('Ratio 3:1.');
+  });
+
   it('uses the stronger ratio when the swing is very large', () => {
     expect(compressorAdvice('male-vocal', 22, digital)!.steps[0]).toBe('Ratio 4:1.');
   });

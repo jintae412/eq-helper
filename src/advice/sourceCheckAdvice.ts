@@ -11,7 +11,7 @@ export const HPF_CUTOFF: Partial<Record<SourceType, number>> = {
   'female-vocal': 120,
   'speech-headset': 150,
   'speech-handheld': 120,
-  'acoustic-guitar': 90,
+  'acoustic-guitar': 80, // just under the low E (82 Hz)
   'electric-guitar': 100,
   overheads: 300,
 };

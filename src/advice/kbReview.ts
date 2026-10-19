@@ -26,7 +26,7 @@ export function renderKbReview(): string {
   const compRows = (Object.entries(COMPRESSOR_STARTS) as [SourceType, NonNullable<(typeof COMPRESSOR_STARTS)[SourceType]>][]).map(([source, c]) => [
     '☐',
     SOURCE_LABELS[source],
-    `${c.ratio}:1${c.strongRatio ? ` (${c.strongRatio}:1 if very uneven)` : ''}`,
+    `${c.ratio}:1${c.strongRatio ? ` (${c.strongRatio}:1 if very uneven)` : ''}${c.knee ? `, ${c.knee} knee` : ''}`,
     c.attack,
     c.release,
     `${c.reductionDb[0]}–${c.reductionDb[1]} dB`,
@@ -55,6 +55,8 @@ ${rows.map((r) => `| ${['☐', `${formatHz(r.hz[0])}–${formatHz(r.hz[1])}`, r.
 boost)? Tick ☐ → ☑ when a row looks right, and write changes in the Notes column.
 
 Frequencies are starting points; the app tells users to try nearby within the "usually" range.
+Where these values came from, and where the app deliberately differs from its sources, is in
+[kb-sources.md](kb-sources.md).
 
 ## EQ advice (${KB.length} entries)
 

@@ -41,7 +41,7 @@ export function compressorAdvice(source: SourceType, swingDb: number, mixer: Mix
     case 'full':
       steps = [
         `Ratio ${ratio(r)}.`,
-        `Attack ${start.attack}, release ${start.release}.`,
+        `Attack ${start.attack}, release ${start.release}${start.knee ? `, ${start.knee} knee if it has that setting` : ''}.`,
         `Lower the threshold until the gain-reduction meter shows ${lo}–${hi} dB on the loudest parts, and little or nothing on the soft parts.`,
         'Bring the make-up/output gain back up by about the same amount so the level matches.',
       ];

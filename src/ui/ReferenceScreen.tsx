@@ -1,12 +1,19 @@
 import { Fragment, useState } from 'react';
 import { SOURCE_LABELS, SOURCE_TYPES, type SourceType } from '../advice/knowledgeBase';
 import { formatHz } from '../advice/mixer';
-import { logPercent, REFERENCE } from '../advice/reference';
+import { logPercent, NOTE_RANGES, REFERENCE } from '../advice/reference';
 
 const AXIS_HZ = [20, 100, 1000, 10000, 20000];
 
+const Bar = ({ hz, className }: { hz: [number, number]; className?: string }) => (
+  <div className="freq-bar">
+    <span className={className} style={{ left: `${logPercent(hz[0])}%`, width: `${logPercent(hz[1]) - logPercent(hz[0])}%` }} />
+  </div>
+);
+
 export function ReferenceScreen() {
   const [source, setSource] = useState<SourceType>('male-vocal');
+  const notes = NOTE_RANGES[source];
 
   return (
     <>
@@ -39,15 +46,25 @@ export function ReferenceScreen() {
         <div className="freq-axis">
           {AXIS_HZ.map((hz) => <span key={hz} style={{ left: `${logPercent(hz)}%` }}>{formatHz(hz)}</span>)}
         </div>
+        {notes && (
+          <>
+            <span className="freq-label"><strong>Notes played</strong></span>
+            <Bar hz={notes} className="notes" />
+          </>
+        )}
         {REFERENCE[source].map((r) => (
           <Fragment key={r.name}>
             <span className="freq-label">{r.name}</span>
-            <div className="freq-bar">
-              <span style={{ left: `${logPercent(r.hz[0])}%`, width: `${logPercent(r.hz[1]) - logPercent(r.hz[0])}%` }} />
-            </div>
+            <Bar hz={r.hz} />
           </Fragment>
         ))}
       </div>
+      {notes && (
+        <p className="muted">
+          <strong>Notes played</strong> ({formatHz(notes[0])}–{formatHz(notes[1])}) is where the actual pitches are. Everything above
+          that is overtones, which carry the character. A high-pass filter just under the lowest note is safe.
+        </p>
+      )}
       {REFERENCE[source].map((r) => (
         <article key={r.name} className="card secondary ref-row">
           <h3>{formatHz(r.hz[0])}–{formatHz(r.hz[1])} <span className="muted">· {r.name}</span></h3>

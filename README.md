@@ -182,21 +182,21 @@ Each answer card has:
   these are shown first.
 - **Why:** what's going on, so you learn it for next time.
 
-**Problems covered** (70 entries in total):
+**Problems covered** (72 entries in total):
 
 | Source | Problems |
 |---|---|
 | Male / female vocal | Muddy, boomy, boxy, nasal, harsh, harsh "S" sounds, thin, dull, buried, pops on P/B |
-| Speaker (headset) | Muddy/boomy, harsh/thin, harsh "S" sounds, dull/hard to understand, pops |
-| Speaker (handheld) | Muddy/boomy, harsh, thin, harsh "S" sounds, dull/hard to understand, pops |
+| Speaker (headset) | Muddy/boomy, harsh/thin, nasal, harsh "S" sounds, dull/hard to understand, pops |
+| Speaker (handheld) | Muddy/boomy, harsh, thin, nasal, harsh "S" sounds, dull/hard to understand, pops |
 | Acoustic guitar | Boomy, muddy, boxy, quacky (piezo), string noise, thin, dull, buried |
-| Electric guitar | Muddy/boomy, harsh, fizzy, nasal/honky, thin, buried |
+| Electric guitar | Muddy/boomy, harsh, fizzy, nasal/honky, thin, dull, buried |
 | Bass | Boomy, muddy, no definition/buried, thin, string/fret clank |
 | Keys | Muddy/boomy, overpowering, harsh, boxy, thin, dull |
 | Cajón | Boomy, boxy, no punch, dull (no slap) |
 | Kick drum | Boxy/muddy, no punch, boomy, too clicky |
 | Snare | Ringing, boxy/muddy, thin, dull (no crack), harsh (hi-hat bleed) |
-| Toms | Ringing, boxy/muddy, boomy, dull/no punch |
+| Toms | Ringing, boxy/muddy, boomy, thin, dull/no punch |
 | Overheads / cymbals | Harsh/overpowering, muddy/boomy, dull |
 | Electronic kit | No punch, harsh, boomy/muddy, thin |
 | Whole mix | Muddy, boomy, harsh, boxy/nasal, thin, dull |
@@ -211,7 +211,9 @@ A cheat sheet for every source: **where its sound lives, and when to boost or cu
 1. Pick a source (vocal, acoustic, kick, whole mix…).
 2. The **chart** shows each frequency range on a 20 Hz–20 kHz scale (low on the left, high on
    the right), so you can see at a glance where "body", "mud", "presence" and "air" sit for
-   that instrument.
+   that instrument. The purple **Notes played** bar shows where the actual pitches are (e.g.
+   a guitar's low E is 82 Hz). Everything above it is overtones, and a high-pass filter just
+   under it is safe.
 3. Below the chart, each range lists **Boost when** (what's missing) and **Cut when** (what's
    too much). For example, male vocal 2–5 kHz "Presence / clarity": boost when words are hard
    to understand, cut when it's harsh or shouty.
@@ -394,7 +396,8 @@ If they're `true`, the browser is processing the mic and level-based advice is l
 - **Drum kits skew the full mix.** Cymbals and kick dominate a phone mic; advice is marked
   when a real kit is in the band.
 - **Rules of thumb, not magic.** The knowledge base is standard live-sound practice for small
-  rooms. It's being reviewed by experienced mixers (see [`docs/kb-review.md`](docs/kb-review.md)).
+  rooms, calibrated against published mixing guides (see [`docs/kb-sources.md`](docs/kb-sources.md)).
+  It's being reviewed by experienced mixers (see [`docs/kb-review.md`](docs/kb-review.md)).
 - **No cloud sync.** Setup lives on the device you entered it on.
 
 ---
@@ -472,7 +475,10 @@ decision is unit-tested with plain data.
   ranges, and at most one entry per source + symptom.
 - **Symptom descriptions** (the "What do these words mean?" glossary) are
   `SYMPTOM_DESCRIPTIONS` in the same file.
-- **Reference charts** live in [`src/advice/reference.ts`](src/advice/reference.ts).
+- **Reference charts** live in [`src/advice/reference.ts`](src/advice/reference.ts) (`REFERENCE`
+  for the ranges, `NOTE_RANGES` for the "Notes played" bar).
+- **Sources:** [`docs/kb-sources.md`](docs/kb-sources.md) records which guide each value came
+  from and where the app deliberately differs. Update it when you change advice based on a source.
 - The guided check reuses KB entries: a bump in a source's sound is matched to the **first** KB
   entry for that source whose cut range contains it, so entry order matters.
 - After any change, run `npm run kb:review` and commit the regenerated

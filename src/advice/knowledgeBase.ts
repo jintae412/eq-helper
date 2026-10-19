@@ -47,9 +47,9 @@ export const SYMPTOM_DESCRIPTIONS: Record<Symptom, string> = {
   muddy: 'Thick and unclear, like the sound is wrapped in a wool blanket. Voices and instruments blur together and words are hard to pick out. Usually too much 200–400 Hz.',
   boomy: 'Too much deep bass that rumbles and hangs around. Low notes sound like they\'re in a barrel and the low end feels flabby instead of tight. Usually 80–200 Hz.',
   boxy: 'Hollow and closed in, like it\'s playing from inside a cardboard box. Usually 400–800 Hz.',
-  nasal: 'Like someone holding their nose, or talking through a megaphone or an old telephone. Usually around 1 kHz.',
+  nasal: 'Like someone holding their nose, or talking through a megaphone or an old telephone. Usually 500 Hz–1.5 kHz.',
   harsh: 'Piercing and edgy. It hurts your ears, especially on loud parts, and you want to turn it down even when it isn\'t that loud. Usually 2–5 kHz.',
-  sibilant: '"S", "T" and "SH" sounds jump out with a hiss or whistle, louder than the rest of the word. Usually 5–8 kHz.',
+  sibilant: '"S", "T" and "SH" sounds jump out with a hiss or whistle, louder than the rest of the word. Usually 5–10 kHz.',
   thin: 'Small, weak or tinny, like it\'s coming out of a phone speaker. It\'s missing body and warmth. Usually not enough 100–250 Hz.',
   dull: 'Muffled and dark, like there\'s a blanket over the speaker. No sparkle, crispness or "air". Usually not enough above 4 kHz.',
   buried: 'You can see them playing but can\'t really hear them, or you can hear the voice but can\'t make out the words. Turning it up barely helps because other sounds are covering it.',
@@ -103,11 +103,11 @@ export const KB: KbEntry[] = [
     why: 'A buildup around 400–800 Hz makes a voice sound like it\'s coming out of a box. A modest cut opens it up without thinning it.',
   },
   {
-    id: 'vocal-nasal', sources: VOCALS, symptoms: ['nasal'],
+    id: 'vocal-nasal', sources: [...VOCALS, 'speech-headset', 'speech-handheld'], symptoms: ['nasal'],
     synonyms: ['honky', 'through the nose', 'pinched', 'telephone'],
-    moves: [eq(800, 1500, 1000, -3, 2)],
+    moves: [eq(500, 1500, 1000, -3, 2)],
     nonEqFixes: [],
-    why: 'Nasal honk lives around 1 kHz. Pulling it back a little makes the voice sound more natural and less "telephone".',
+    why: 'Nasal honk usually lives around 1 kHz, but on some voices it\'s as low as 500 Hz. Pulling it back a little makes the voice sound more natural and less "telephone".',
   },
   {
     id: 'vocal-harsh', sources: VOCALS, symptoms: ['harsh'],
@@ -119,30 +119,30 @@ export const KB: KbEntry[] = [
   {
     id: 'vocal-sibilant', sources: VOCALS, symptoms: ['sibilant'],
     synonyms: ['s sounds', 'esses', 'hissy', 'spitty', 'lispy'],
-    moves: [eq(5000, 8000, 6500, -3, 4)],
+    moves: [eq(5000, 10000, 6500, -3, 4)],
     nonEqFixes: ['Angle the mic slightly off-axis from the mouth.'],
-    why: '"S" and "T" sounds are concentrated in a narrow band around 5–8 kHz. A narrow cut tames them without dulling the whole voice.',
+    why: '"S" and "T" sounds are concentrated in a narrow band somewhere in 5–10 kHz (higher voices sit higher). A narrow cut tames them without dulling the whole voice.',
   },
   {
     id: 'vocal-buried', sources: VOCALS, symptoms: ['buried'],
     synonyms: ['lost', 'can\'t hear', 'masked', 'behind the band', 'drowned', 'not cutting through'],
-    moves: [eq(2000, 4000, 3000, 2, 1.4)],
+    moves: [eq(1000, 5000, 3000, 2, 1.4)],
     nonEqFixes: ['Better: cut 2–4 kHz by 2–3 dB on acoustic and keys to make room. That avoids raising feedback risk on the vocal mic.', 'Check the singer is close to the mic.'],
-    why: 'Word clarity lives at 2–4 kHz. If instruments fill that range, the vocal gets masked no matter how loud it is. Making room beats turning it up.',
+    why: 'Word clarity lives at 1–5 kHz, strongest around 2–4 kHz. If instruments fill that range, the vocal gets masked no matter how loud it is. Making room beats turning it up.',
   },
   {
     id: 'vocal-thin', sources: VOCALS, symptoms: ['thin'],
     synonyms: ['weak', 'small', 'tinny', 'no body', 'no warmth'],
-    moves: [eq(150, 250, 200, 2, 1.4)],
+    moves: [eq(120, 300, 200, 2, 1.4)],
     nonEqFixes: ['Check the HPF isn\'t set too high.', 'Have the singer move a little closer to the mic.'],
-    why: 'Body and warmth sit around 150–250 Hz. A small boost restores weight. Go easy: too much here turns into mud.',
+    why: 'Body and warmth sit around 120–300 Hz (lower for deep voices). A small boost restores weight. Go easy: too much here turns into mud.',
   },
   {
     id: 'vocal-dull', sources: VOCALS, symptoms: ['dull'],
     synonyms: ['dark', 'muffled', 'no air', 'flat', 'lifeless'],
-    moves: [eq(8000, 14000, 10000, 2, 0.7)],
+    moves: [eq(5000, 14000, 10000, 2, 0.7)],
     nonEqFixes: ['Check the mic grille isn\'t covered or cupped.'],
-    why: '"Air" above 8 kHz adds openness and polish. A gentle, broad lift brightens without harshness.',
+    why: '"Air" and breathiness above 5 kHz adds openness and polish. A gentle, broad lift brightens without harshness.',
   },
   {
     id: 'vocal-plosives', sources: [...VOCALS, 'speech-handheld', 'speech-headset'], symptoms: ['plosives'],
@@ -212,6 +212,7 @@ export const KB: KbEntry[] = [
       'Turn background music or pads down while they talk.',
       'Check the mic placement: a headset at the corner of the mouth, a handheld about a fist-width away.',
       'Headset tucked under hair, a scarf or a beard? Move it clear.',
+      'Check the channel gain (trim) is set so normal talking shows a healthy level. Too little gain means pushing the fader and EQ to make up for it.',
     ],
     why: 'Words are carried by consonants at 2–5 kHz, and low-mid mud at 200–400 Hz covers them up. Trimming one and gently lifting the other makes speech easier to follow without just making it louder.',
   },
@@ -219,8 +220,12 @@ export const KB: KbEntry[] = [
   {
     id: 'acoustic-boomy', sources: ['acoustic-guitar'], symptoms: ['boomy'],
     synonyms: ['bassy', 'woofy', 'thumpy', 'resonant'],
-    moves: [hpf(90), eq(100, 200, 150, -4, 1.4)],
-    nonEqFixes: ['If it has a mic, move it away from the soundhole.', 'A soundhole cover tames body boom and feedback.'],
+    moves: [hpf(80), eq(100, 200, 150, -4, 1.4)],
+    nonEqFixes: [
+      'If it has a mic, move it away from the soundhole.',
+      'A soundhole cover tames body boom and feedback.',
+      'Solo guitar with no bass player? Set the HPF lower (around 60 Hz) or leave it off, so the guitar keeps its bottom end.',
+    ],
     why: 'The guitar body resonates around 100–200 Hz. The bass player already covers the low end, so cutting it cleans up the mix and lowers feedback risk.',
   },
   {
@@ -247,30 +252,33 @@ export const KB: KbEntry[] = [
   {
     id: 'acoustic-buried', sources: ['acoustic-guitar'], symptoms: ['buried'],
     synonyms: ['lost', 'can\'t hear', 'masked', 'disappears'],
-    moves: [eq(3000, 5000, 4000, 2, 1.4)],
+    moves: [eq(2000, 5000, 3500, 2, 1.4)],
     nonEqFixes: ['Cut 200–300 Hz on the acoustic instead of turning it up. Less mud often reads as more presence.'],
-    why: 'Sparkle at 3–5 kHz cuts through a band better than volume does. Volume mostly adds low-mid mud.',
+    why: 'Bite at 2–5 kHz cuts through a band better than volume does. Volume mostly adds low-mid mud.',
   },
   {
     id: 'acoustic-boxy', sources: ['acoustic-guitar'], symptoms: ['boxy'],
     synonyms: ['cardboard', 'hollow', 'closed in', 'honky'],
-    moves: [eq(400, 900, 600, -3, 2)],
-    nonEqFixes: ['If it has a mic, aim it at where the neck meets the body (around the 12th–14th fret), not the soundhole.'],
-    why: 'The guitar\'s body can build up a hollow, boxy tone around 400–900 Hz. A modest cut makes it sound more open and natural.',
+    moves: [eq(400, 1200, 900, -3, 2)],
+    nonEqFixes: [
+      'Find the exact spot: Listen → Guided check walks you through boost, sweep, then cut.',
+      'If it has a mic, aim it at where the neck meets the body (around the 12th–14th fret), not the soundhole.',
+    ],
+    why: 'Acoustics, especially plugged-in ones, often build up a hollow, boxy tone around 900 Hz–1 kHz, sometimes lower. A modest cut makes it sound more open and natural.',
   },
   {
     id: 'acoustic-thin', sources: ['acoustic-guitar'], symptoms: ['thin'],
     synonyms: ['tinny', 'small', 'no body', 'weak', 'brittle'],
     moves: [eq(150, 300, 200, 2, 1.4)],
-    nonEqFixes: ['Check the HPF isn\'t set too high (80–90 Hz is plenty).', 'Piezo pickups often sound thin. If the guitar has a blend knob, add some of its internal mic.'],
+    nonEqFixes: ['Check the HPF isn\'t set too high (about 80 Hz is plenty).', 'Piezo pickups often sound thin. If the guitar has a blend knob, add some of its internal mic.'],
     why: 'An acoustic\'s warmth lives around 150–300 Hz. A small boost gives it body. Go easy: it\'s the same range that turns into mud with the vocals.',
   },
   {
     id: 'acoustic-dull', sources: ['acoustic-guitar'], symptoms: ['dull'],
     synonyms: ['dark', 'muffled', 'dead strings', 'no sparkle', 'lifeless'],
-    moves: [eq(8000, 12000, 10000, 2, 0.7)],
+    moves: [eq(8000, 14000, 12000, 2, 0.7)],
     nonEqFixes: ['Old strings sound dull and no EQ fully fixes that. Fresh strings make a big difference.'],
-    why: 'Shimmer and sparkle sit above 8 kHz. A gentle, broad lift brings it back without adding pick scratch.',
+    why: 'Shimmer and sparkle sit above 8 kHz, around 12 kHz. A gentle, broad lift brings it back without adding pick scratch.',
   },
   // ── Electric guitar ─────────────────────────────────────────────────────
   {
@@ -278,7 +286,7 @@ export const KB: KbEntry[] = [
     synonyms: ['murky', 'thick', 'fighting the bass', 'woofy'],
     moves: [hpf(100), eq(200, 300, 250, -3, 1.4)],
     nonEqFixes: [],
-    why: 'Electric guitar low end fights the bass. Cutting it makes both clearer.',
+    why: 'Electric guitar low end fights the bass. Cutting it makes both clearer, and the HPF also removes amp hum (50–60 Hz).',
   },
   {
     id: 'electric-harsh', sources: ['electric-guitar'], symptoms: ['harsh'],
@@ -304,16 +312,23 @@ export const KB: KbEntry[] = [
   {
     id: 'electric-thin', sources: ['electric-guitar'], symptoms: ['thin'],
     synonyms: ['weak', 'small', 'tinny', 'no body', 'fizzy and thin'],
-    moves: [eq(150, 300, 200, 2, 1.4)],
+    moves: [eq(150, 300, 250, 2, 1.4)],
     nonEqFixes: ['Move the amp mic a little toward the edge of the speaker cone for a warmer sound.', 'Ask the guitarist to add some bass or mids on the amp itself.'],
-    why: 'Body and chunk sit around 150–300 Hz. A small boost fills the guitar out. Don\'t overdo it, or it starts fighting the bass.',
+    why: 'Body and warmth sit around 250–300 Hz. A small boost fills the guitar out. Don\'t overdo it, or it starts fighting the bass.',
+  },
+  {
+    id: 'electric-dull', sources: ['electric-guitar'], symptoms: ['dull'],
+    synonyms: ['dark', 'muffled', 'no air', 'woolly', 'no sparkle'],
+    moves: [eq(8000, 14000, 12000, 2, 0.7)],
+    nonEqFixes: ['Check the amp mic is pointed at the speaker cone, not the edge of the cabinet.'],
+    why: 'Air and sheen above 8 kHz make a clean guitar shimmer. A gentle, broad lift brings it back. Skip this on heavily distorted tones, where it turns into fizz.',
   },
   {
     id: 'electric-buried', sources: ['electric-guitar'], symptoms: ['buried'],
     synonyms: ['lost', 'can\'t hear', 'masked', 'disappears'],
-    moves: [eq(1000, 3000, 1500, 2, 1.4)],
+    moves: [eq(1000, 4000, 2500, 2, 1.4)],
     nonEqFixes: ['Better: cut 1–3 kHz a little on keys or acoustic so the electric has its own space.'],
-    why: 'An electric guitar\'s bite lives at 1–3 kHz. That\'s what lets it cut through, and volume alone mostly adds mud.',
+    why: 'An electric guitar\'s bite and clarity live at 1–4 kHz. That\'s what lets it cut through, and volume alone mostly adds mud.',
   },
   // ── Bass ────────────────────────────────────────────────────────────────
   {
@@ -326,21 +341,21 @@ export const KB: KbEntry[] = [
   {
     id: 'bass-muddy', sources: ['bass'], symptoms: ['muddy'],
     synonyms: ['murky', 'thick', 'cloudy'],
-    moves: [eq(200, 300, 250, -3, 1.4)],
+    moves: [eq(200, 500, 250, -3, 1.4)],
     nonEqFixes: [],
-    why: 'Bass low-mids overlap guitar and keys. Cutting here separates the bass from everything else.',
+    why: 'Bass mud usually sits around 250 Hz, with boxiness up to 500 Hz. These low-mids overlap guitar and keys. Cutting here separates the bass from everything else.',
   },
   {
     id: 'bass-no-definition', sources: ['bass'], symptoms: ['no-definition', 'buried'],
     synonyms: ['can\'t hear notes', 'undefined', 'just a rumble', 'lost'],
-    moves: [eq(700, 1000, 800, 3, 1.4)],
+    moves: [eq(700, 1000, 800, 3, 1.4), eq(2000, 4000, 2500, 2, 1.4)],
     nonEqFixes: [],
-    why: 'Small PA speakers can\'t reproduce deep lows, so people actually hear bass through its growl and attack around 700 Hz–1 kHz.',
+    why: 'Small PA speakers can\'t reproduce deep lows, so people actually hear bass through its growl around 700 Hz–1 kHz and its string attack around 2.5 kHz.',
   },
   {
     id: 'bass-thin', sources: ['bass'], symptoms: ['thin'],
     synonyms: ['weak', 'no bottom', 'no low end', 'small'],
-    moves: [eq(60, 120, 80, 3, 1.4)],
+    moves: [eq(40, 120, 80, 3, 1.4)],
     nonEqFixes: ['Walk to the middle of the room before boosting. The low end at the board can be very different.', 'Check the bass channel\'s HPF is off.'],
     why: 'A bass\'s weight lives at 60–120 Hz. If that\'s missing it feels weak. Small speakers can only do so much here, so check by ear in the room first.',
   },
@@ -355,9 +370,12 @@ export const KB: KbEntry[] = [
   {
     id: 'keys-muddy', sources: ['keys'], symptoms: ['muddy', 'boomy'],
     synonyms: ['murky', 'thick', 'left hand', 'cloudy'],
-    moves: [hpf(100), eq(200, 400, 300, -3, 1.4)],
-    nonEqFixes: ['When a bass player is present, ask keys to lighten the left hand.'],
-    why: 'A piano\'s left hand doubles the bass. In a full band, trimming its lows clears space for bass and vocals.',
+    moves: [hpf(100), eq(200, 400, 250, -3, 1.4)],
+    nonEqFixes: [
+      'When a bass player is present, ask keys to lighten the left hand.',
+      'Find the exact spot: Listen → Guided check walks you through boost, sweep, then cut. It\'s often right around 250 Hz.',
+    ],
+    why: 'A piano\'s left hand doubles the bass, and keys mud usually sits right around 250 Hz. In a full band, trimming its lows clears space for bass and vocals.',
   },
   {
     id: 'keys-overpowering', sources: ['keys'], symptoms: ['overpowering'],
@@ -369,9 +387,9 @@ export const KB: KbEntry[] = [
   {
     id: 'keys-harsh', sources: ['keys'], symptoms: ['harsh'],
     synonyms: ['brittle', 'tinny', 'digital', 'clangy'],
-    moves: [eq(3000, 5000, 4000, -3, 2)],
+    moves: [eq(2500, 7500, 4000, -3, 2)],
     nonEqFixes: [],
-    why: 'Digital piano samples are often bright at 3–5 kHz. Softening this makes them sit back in the mix.',
+    why: 'Digital piano samples are often bright at 2.5–5 kHz and shrill up to 7.5 kHz. Softening this makes them sit back in the mix.',
   },
   {
     id: 'keys-boxy', sources: ['keys'], symptoms: ['boxy'],
@@ -393,9 +411,9 @@ export const KB: KbEntry[] = [
   {
     id: 'keys-dull', sources: ['keys'], symptoms: ['dull'],
     synonyms: ['dark', 'muffled', 'lifeless', 'no sparkle'],
-    moves: [eq(5000, 10000, 7000, 2, 0.7)],
+    moves: [eq(7500, 12000, 10000, 2, 0.7)],
     nonEqFixes: ['Many keyboards have a brightness or tone control. Try that first.'],
-    why: 'Hammer attack and sparkle sit above 5 kHz. A gentle, broad lift brings the keys forward without making them harsh.',
+    why: 'Sheen and sparkle sit around 10 kHz, above the shrill range. A gentle, broad lift brings the keys forward without making them harsh.',
   },
   // ── Drums ───────────────────────────────────────────────────────────────
   {
@@ -422,9 +440,9 @@ export const KB: KbEntry[] = [
   {
     id: 'kick-boxy', sources: ['kick'], symptoms: ['boxy', 'muddy'],
     synonyms: ['cardboard', 'papery', 'pillowy', 'thuddy'],
-    moves: [eq(300, 500, 400, -4, 1.4)],
-    nonEqFixes: [],
-    why: 'The cardboard sound of a kick sits around 300–500 Hz. Scooping it leaves the thump and the click.',
+    moves: [eq(250, 600, 400, -4, 1.4)],
+    nonEqFixes: ['Find the exact spot: Listen → Guided check walks you through boost, sweep, then cut. It\'s usually between 250 and 500 Hz.'],
+    why: 'The cardboard sound of a kick sits around 250–500 Hz. Scooping it leaves the thump and the click.',
   },
   {
     id: 'kick-no-punch', sources: ['kick', 'e-kit'], symptoms: ['no-punch'],
@@ -443,14 +461,14 @@ export const KB: KbEntry[] = [
   {
     id: 'toms-boxy', sources: ['toms'], symptoms: ['boxy', 'muddy'],
     synonyms: ['cardboard', 'papery', 'hollow'],
-    moves: [eq(300, 600, 400, -3, 1.4)],
-    nonEqFixes: [],
-    why: 'Toms get boxy around 300–600 Hz. A cut leaves the body and attack.',
+    moves: [eq(250, 600, 400, -3, 1.4)],
+    nonEqFixes: ['Find the exact spot: Listen → Guided check walks you through boost, sweep, then cut.'],
+    why: 'Toms get boxy around 250–600 Hz. A cut leaves the body and attack.',
   },
   {
     id: 'overheads-harsh', sources: ['overheads'], symptoms: ['harsh', 'overpowering'],
     synonyms: ['too much cymbal', 'washy', 'trashy', 'piercing', 'clangy'],
-    moves: [hpf(300), eq(2000, 5000, 3500, -3, 1.4)],
+    moves: [hpf(300), eq(2000, 6000, 3500, -3, 1.4)],
     nonEqFixes: ['In small rooms, cymbals are often loud enough acoustically. Try the overheads much lower or off.'],
     why: 'In small rooms the overheads are only needed for cymbals, so filtering their lows removes extra kit mud, and a cut at 2–5 kHz tames the harsh wash.',
   },
@@ -485,21 +503,21 @@ export const KB: KbEntry[] = [
   {
     id: 'snare-boxy', sources: ['snare'], symptoms: ['boxy', 'muddy'],
     synonyms: ['cardboard', 'papery', 'hollow', 'honky'],
-    moves: [eq(400, 900, 600, -3, 1.4)],
+    moves: [eq(300, 900, 500, -3, 1.4)],
     nonEqFixes: [],
-    why: 'Snares get a boxy, honky tone around 400–900 Hz. A cut there leaves the body (around 200 Hz) and the crack.',
+    why: 'Snares get a boxy, honky tone around 300–900 Hz. A cut there leaves the body (around 200 Hz) and the crack.',
   },
   {
     id: 'snare-thin', sources: ['snare'], symptoms: ['thin'],
     synonyms: ['no body', 'weak', 'small', 'tinny', 'no fat'],
-    moves: [eq(150, 250, 200, 2, 1.4)],
-    nonEqFixes: ['Point the mic at the center of the head, about two fingers above the rim.'],
-    why: 'A snare\'s body and fatness live around 150–250 Hz. A small boost gives it weight without making it boomy.',
+    moves: [eq(120, 250, 200, 2, 1.4)],
+    nonEqFixes: ['Angle the mic about 45° to the head, two fingers above the rim, pointed at the center.'],
+    why: 'A snare\'s body and fatness live around 120–250 Hz. A small boost gives it weight without making it boomy.',
   },
   {
     id: 'snare-dull', sources: ['snare'], symptoms: ['dull'],
     synonyms: ['no crack', 'no snap', 'muffled', 'dead', 'flat'],
-    moves: [eq(3000, 6000, 4000, 2, 1.4)],
+    moves: [eq(2500, 6000, 3500, 2, 1.4)],
     nonEqFixes: ['A snare that\'s over-dampened (lots of gel or tape) sounds dead. Take some off.'],
     why: 'The snare\'s crack sits at 3–6 kHz. A small boost brings back the snap that makes the backbeat feel alive.',
   },
@@ -518,11 +536,18 @@ export const KB: KbEntry[] = [
     why: 'Floor toms especially boom at 80–150 Hz in small rooms. A small cut keeps them big without muddying the bass and kick.',
   },
   {
+    id: 'toms-thin', sources: ['toms'], symptoms: ['thin'],
+    synonyms: ['small', 'weak', 'papery', 'no body', 'no fullness'],
+    moves: [eq(100, 240, 150, 2, 1.4)],
+    nonEqFixes: ['Tuning matters more than EQ here. Very high-tuned toms sound small whatever you do.'],
+    why: 'Tom fullness lives around 120–240 Hz. A small boost gives fills some weight. Keep it gentle so the floor tom doesn\'t start to boom.',
+  },
+  {
     id: 'toms-dull', sources: ['toms'], symptoms: ['dull', 'no-punch'],
     synonyms: ['no attack', 'no stick', 'soft', 'muffled', 'flat'],
-    moves: [eq(3000, 6000, 4000, 2, 1.4)],
+    moves: [eq(2000, 6000, 4000, 2, 1.4)],
     nonEqFixes: [],
-    why: 'The stick attack on toms is at 3–6 kHz. A small lift makes fills cut through without turning them up.',
+    why: 'The snap and stick attack on toms is at 2–6 kHz. A small lift makes fills cut through without turning them up.',
   },
   {
     id: 'overheads-muddy', sources: ['overheads'], symptoms: ['muddy', 'boomy'],
@@ -534,8 +559,11 @@ export const KB: KbEntry[] = [
   {
     id: 'overheads-dull', sources: ['overheads'], symptoms: ['dull'],
     synonyms: ['no shimmer', 'no sparkle', 'dark cymbals', 'muffled'],
-    moves: [eq(8000, 14000, 10000, 2, 0.7)],
-    nonEqFixes: ['Cymbals usually carry fine in a small room by themselves. Mute the overheads to compare before boosting.'],
+    moves: [eq(8000, 14000, 12000, 2, 0.7)],
+    nonEqFixes: [
+      'Cymbals usually carry fine in a small room by themselves. Mute the overheads to compare before boosting.',
+      'Barely any sound at all? Condenser mics need phantom power (48V) turned on for that channel.',
+    ],
     why: 'Cymbal shimmer lives above 8 kHz. A broad, gentle lift adds sparkle without the clang at 2–5 kHz.',
   },
   {
@@ -607,12 +635,13 @@ export interface CompressorStart {
   reductionDb: [number, number]; // target gain reduction on the loudest passages
   swingDb: number; // recommend compression only above this swing
   gentleOnly?: boolean; // usually better uncompressed; only advise when the swing is extreme
+  knee?: 'soft' | 'hard'; // only shown on compressors with full controls
   why: string;
 }
 
 const VOICE_START: CompressorStart = {
-  ratio: 3, strongRatio: 4, attack: '10–20 ms', release: 'about 150 ms (or auto)', reductionDb: [3, 6], swingDb: 13,
-  why: 'Singers get much louder on big notes and softer on quiet lines. Gentle compression evens that out so you aren\'t riding the fader every phrase.',
+  ratio: 3, strongRatio: 4, attack: '20–40 ms', release: '150–300 ms (or auto)', reductionDb: [3, 6], swingDb: 13, knee: 'soft',
+  why: 'Singers get much louder on big notes and softer on quiet lines. Gentle compression evens that out so you aren\'t riding the fader every phrase. Much faster release sounds pumpy; much slower attack lets the loud surges through.',
 };
 
 const GENTLE_START: CompressorStart = {
@@ -624,37 +653,44 @@ export const COMPRESSOR_STARTS: Partial<Record<SourceType, CompressorStart>> = {
   'male-vocal': VOICE_START,
   'female-vocal': VOICE_START,
   'speech-headset': {
-    ratio: 2.5, attack: '10 ms', release: 'about 150 ms', reductionDb: [3, 6], swingDb: 13,
+    ratio: 2.5, attack: '10–20 ms', release: 'about 150 ms', reductionDb: [3, 6], swingDb: 13, knee: 'soft',
     why: 'Speakers drop their voice for emphasis and get loud when excited. Light compression keeps every word at a listenable level.',
   },
   'speech-handheld': {
-    ratio: 2.5, attack: '10 ms', release: 'about 150 ms', reductionDb: [3, 6], swingDb: 13,
+    ratio: 2.5, attack: '10–20 ms', release: 'about 150 ms', reductionDb: [3, 6], swingDb: 13, knee: 'soft',
     why: 'Handheld mic distance changes a lot while talking. Light compression smooths out the near/far level jumps.',
   },
   'acoustic-guitar': {
-    ratio: 2.5, attack: '15–25 ms (lets the strum through)', release: 'about 150 ms', reductionDb: [2, 4], swingDb: 10,
+    ratio: 2.5, attack: '25–50 ms (lets the strum through)', release: '150–300 ms', reductionDb: [2, 4], swingDb: 10, knee: 'soft',
     why: 'Strumming hard vs. picking softly can jump 10+ dB. A gentle squeeze keeps the guitar steady under the vocals without killing the strum.',
   },
   bass: {
-    ratio: 4, attack: '10–20 ms', release: 'about 200 ms', reductionDb: [3, 6], swingDb: 10,
-    why: 'Some bass notes ring out much louder than others. Compression keeps the low end steady so the groove sits evenly.',
+    ratio: 4, attack: 'about 25 ms', release: '200–500 ms', reductionDb: [3, 6], swingDb: 10, knee: 'hard',
+    why: 'Some bass notes and strings ring out much louder than others. Compression keeps the low end steady so the groove sits evenly. Slap bass may need 6:1 or more with a faster attack.',
+  },
+  'electric-guitar': {
+    ratio: 3, attack: 'about 25 ms', release: 'about 500 ms', reductionDb: [2, 4], swingDb: 15, knee: 'hard',
+    why: 'Distorted guitar is already heavily compressed by the distortion itself, so leave it alone. Clean parts that jump from soft picking to loud strumming benefit from a light squeeze.',
   },
   keys: {
-    ratio: 2, attack: '20 ms', release: 'auto', reductionDb: [2, 3], swingDb: 15,
+    ratio: 2, attack: '30–50 ms (lets the attack bite through)', release: 'auto', reductionDb: [2, 3], swingDb: 15,
     why: 'Keys are usually even. Only very uneven playing (soft pads jumping to loud chords) benefits from a light touch.',
   },
   kick: {
-    ratio: 4, attack: '20–30 ms (keeps the punch)', release: 'about 100 ms', reductionDb: [3, 6], swingDb: 12,
+    ratio: 4, attack: '20–30 ms (keeps the punch)', release: 'fast, 25–100 ms', reductionDb: [3, 6], swingDb: 12, knee: 'hard',
     why: 'Evens out hit-to-hit level. The slower attack lets the initial thump through so it stays punchy.',
   },
   snare: {
-    ratio: 4, attack: '20–30 ms (keeps the crack)', release: 'about 100 ms', reductionDb: [3, 6], swingDb: 12,
+    ratio: 4, attack: '20–30 ms (keeps the crack)', release: 'fast, 25–100 ms', reductionDb: [3, 6], swingDb: 12, knee: 'hard',
     why: 'Ghost notes and rimshots vary wildly. Compression evens them out while the slow attack keeps the crack.',
   },
   toms: GENTLE_START,
   cajon: GENTLE_START,
   'e-kit': GENTLE_START,
-  overheads: GENTLE_START,
+  overheads: {
+    ...GENTLE_START, attack: 'about 25 ms', release: 'slow, 1–2 s (lets cymbals ring)',
+    why: 'Cymbals usually sound best uncompressed in a small room. The swing here is extreme, so a light touch with a slow release evens it out without choking the ring.',
+  },
 };
 
 export function lookup(source: SourceType, symptom: Symptom): KbEntry | undefined {

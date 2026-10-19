@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { logPercent, REFERENCE } from './reference';
+import { logPercent, NOTE_RANGES, REFERENCE } from './reference';
 
 it.each(Object.entries(REFERENCE))('%s rows are in order with sane ranges and real text', (_, rows) => {
   expect(rows.length).toBeGreaterThan(2);
@@ -17,4 +17,10 @@ it('maps the audible range onto 0–100 on a log axis', () => {
   expect(logPercent(20000)).toBe(100);
   expect(logPercent(632)).toBeCloseTo(50, 0);
   expect(logPercent(5)).toBe(0);
+});
+
+it.each(Object.entries(NOTE_RANGES))('%s note range is audible and ordered', (_, r) => {
+  expect(r![0]).toBeGreaterThanOrEqual(20);
+  expect(r![0]).toBeLessThan(r![1]);
+  expect(r![1]).toBeLessThanOrEqual(5000);
 });
