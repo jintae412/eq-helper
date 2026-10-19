@@ -61,6 +61,8 @@ export type EqMove = { kind: 'eq'; freqHz: number; gainDb: number; q: number } |
 export type Instruction =
   | { kind: 'adjust'; control: BandKind; band: string; freqHz: number; gainDb: number; q?: number; approximate: boolean }
   | { kind: 'hpf'; freqHz: number; fixed: boolean }
+  /** The board's HPF can't go low enough: engaging it would cut what the source needs. */
+  | { kind: 'hpf-too-high'; lowestHz: number }
   | { kind: 'unreachable'; freqHz: number };
 
 export type PresetKind = '3-band' | 'sweep-mid' | 'dual-sweep' | 'digital';
@@ -125,6 +127,9 @@ export function createFromPreset(kind: PresetKind, name: string, id: string = cr
 // A fixed band more than ~1 octave away does more collateral damage than good.
 const MAX_FIXED_OCTAVES = 1;
 const EXACT_ENOUGH_OCTAVES = 1 / 6;
+// A low cut landing this far above where it was asked for starts eating the source's own notes
+// (e.g. an 80 Hz HPF button on a bass that wanted 35 Hz).
+const MAX_LOW_CUT_RAISE_OCTAVES = 1 / 2;
 
 const octavesApart = (a: number, b: number) => Math.abs(Math.log2(a / b));
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -156,12 +161,15 @@ function candidate(move: Extract<EqMove, { kind: 'eq' }>, band: EqBand): { inst:
 
 export function translate(move: EqMove, profile: MixerProfile): Instruction {
   if (move.kind === 'hpf') {
+    const tooHigh = (hz: number) => Math.log2(hz / move.freqHz) > MAX_LOW_CUT_RAISE_OCTAVES;
     if (profile.hpf) {
       const { minHz, maxHz } = profile.hpf;
+      if (tooHigh(minHz)) return { kind: 'hpf-too-high', lowestHz: minHz };
       return { kind: 'hpf', freqHz: clamp(move.freqHz, minHz, maxHz), fixed: minHz === maxHz };
     }
-    // No HPF: a broad low cut is the next best thing.
-    return translate({ kind: 'eq', freqHz: move.freqHz, gainDb: -6, q: 0.7 }, profile);
+    // No HPF: a broad low cut is the next best thing, unless the nearest knob sits too high.
+    const lowCut = translate({ kind: 'eq', freqHz: move.freqHz, gainDb: -6, q: 0.7 }, profile);
+    return lowCut.kind === 'adjust' && tooHigh(lowCut.freqHz) ? { kind: 'unreachable', freqHz: move.freqHz } : lowCut;
   }
   const best = profile.bands
     .map((b) => candidate(move, b))
@@ -181,6 +189,8 @@ export function describeInstruction(inst: Instruction): string {
       return inst.fixed
         ? `Turn on the high-pass filter (HPF, ${formatHz(inst.freqHz)}).`
         : `Set the high-pass filter (HPF) to ${formatHz(inst.freqHz)}.`;
+    case 'hpf-too-high':
+      return `Leave the high-pass filter (HPF) off: its lowest setting, ${formatHz(inst.lowestHz)}, would cut into this sound.`;
     case 'unreachable':
       return `This mixer has no EQ knob near ${formatHz(inst.freqHz)}.`;
     case 'adjust':

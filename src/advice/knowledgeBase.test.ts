@@ -71,6 +71,13 @@ describe('buildAnswer', () => {
     ]);
   });
 
+  it('tells bass to leave a fixed 80 Hz HPF off instead of turning it on', () => {
+    const a = buildAnswer(lookup('bass', 'boomy')!, 'bass', createFromPreset('sweep-mid', 't', 'd'));
+    expect(a.steps[0]).toBe('Leave the high-pass filter (HPF) off: its lowest setting, 80 Hz, would cut into this sound.');
+    expect(a.steps.join(' ')).not.toContain('Turn on the high-pass filter');
+    expect(a.reachable).toBe(true); // the MID cut still works
+  });
+
   it('uses graphic EQ sliders for whole-mix advice', () => {
     const a = buildAnswer(lookup('full-mix', 'muddy')!, 'full-mix', createFromPreset('3-band', 't', 'c'));
     expect(a.steps).toEqual(['On the main graphic EQ, pull the 315 Hz slider down 3 dB.']);

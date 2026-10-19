@@ -35,6 +35,20 @@ describe('translate', () => {
     const noHpf: MixerProfile = { ...threeBand, hpf: undefined };
     expect(translate({ kind: 'hpf', freqHz: 100 }, noHpf)).toMatchObject({ kind: 'adjust', band: 'LOW', gainDb: -6 });
   });
+
+  it('never engages an HPF well above what was asked for (bass wanting 35 Hz on an 80 Hz button)', () => {
+    expect(translate({ kind: 'hpf', freqHz: 35 }, threeBand)).toEqual({ kind: 'hpf-too-high', lowestHz: 80 });
+    expect(translate({ kind: 'hpf', freqHz: 35 }, digital)).toEqual({ kind: 'hpf', freqHz: 35, fixed: false });
+    // Up to half an octave higher is close enough to still use.
+    expect(translate({ kind: 'hpf', freqHz: 60 }, threeBand)).toEqual({ kind: 'hpf', freqHz: 80, fixed: true });
+    expect(describeInstruction({ kind: 'hpf-too-high', lowestHz: 80 }))
+      .toBe('Leave the high-pass filter (HPF) off: its lowest setting, 80 Hz, would cut into this sound.');
+  });
+
+  it('does not stand in for a very low HPF with a LOW knob sitting far above it', () => {
+    const lowAt60: MixerProfile = { ...threeBand, hpf: undefined, bands: [{ kind: 'fixed', label: 'LOW', freqHz: 60, maxGainDb: 15 }] };
+    expect(translate({ kind: 'hpf', freqHz: 35 }, lowAt60)).toEqual({ kind: 'unreachable', freqHz: 35 });
+  });
 });
 
 describe('describeInstruction', () => {

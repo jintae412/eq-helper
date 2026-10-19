@@ -38,7 +38,7 @@ export function buildAnswer(entry: KbEntry, source: SourceType, mixer: MixerProf
   const instructions = entry.moves.map((m) => translate(m, mixer));
   return {
     steps: instructions.map(describeInstruction),
-    reachable: instructions.some((i) => i.kind !== 'unreachable'),
+    reachable: instructions.some((i) => i.kind === 'adjust' || i.kind === 'hpf'),
     nonEqFixes: entry.nonEqFixes,
     ranges,
     why: entry.why,
