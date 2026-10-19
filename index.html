@@ -75,13 +75,20 @@
       .glossary dd { margin: 2px 0 0; color: #bbb; }
       .freq-chart { display: grid; grid-template-columns: minmax(6rem, 9rem) 1fr; gap: 6px 10px; align-items: center; }
       .freq-label { font-size: 0.85rem; color: #bbb; }
-      .freq-axis { position: relative; height: 1.2em; font-size: 0.75rem; color: #999; }
+      .freq-axis { position: relative; height: 1.3em; font-size: 0.7rem; color: #888; font-variant-numeric: tabular-nums; }
       .freq-axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+      .freq-axis span.major { color: #ddd; }
       .freq-axis span:first-child { transform: none; }
-      .freq-axis span:last-child { transform: translateX(-100%); }
-      .freq-bar { position: relative; height: 10px; background: #262626; border-radius: 5px; }
-      .freq-bar span { position: absolute; top: 0; bottom: 0; min-width: 4px; background: #4fc3f7; border-radius: 5px; }
-      .freq-bar span.notes { background: #ba68c8; }
+      .freq-bar { position: relative; height: 14px; background: #262626; border-radius: 4px; overflow: hidden; }
+      .freq-bar .fill { position: absolute; top: 0; bottom: 0; min-width: 4px; background: #4fc3f7; border-radius: 4px; }
+      .freq-bar .fill.notes { background: #ba68c8; }
+      .freq-bar .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, 0.14); }
+      .freq-bar .tick.major { background: rgba(255, 255, 255, 0.4); }
+      @media (max-width: 560px) {
+        .freq-chart { grid-template-columns: 1fr; gap: 2px; }
+        .freq-spacer { display: none; }
+        .freq-bar { margin-bottom: 6px; }
+      }
       .ref-row p { margin: 4px 0; }
       .boost { color: #81c784; margin-right: 4px; }
       .cut { color: #ffb74d; margin-right: 4px; }

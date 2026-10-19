@@ -3,11 +3,30 @@ import { SOURCE_LABELS, SOURCE_TYPES, type SourceType } from '../advice/knowledg
 import { formatHz } from '../advice/mixer';
 import { logPercent, NOTE_RANGES, REFERENCE } from '../advice/reference';
 
-const AXIS_HZ = [20, 100, 1000, 10000, 20000];
+// 1-2-5 steps per decade: dense enough to read a range off, sparse enough to fit on a phone.
+// No 20k label: it would collide with 10k, and the chart's right edge is 20 kHz anyway.
+const TICKS_HZ = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+const isDecade = (hz: number) => Number.isInteger(Math.log10(hz));
+const tickLabel = (hz: number) => (hz >= 1000 ? `${hz / 1000}k` : `${hz}`);
+
+const Axis = () => (
+  <>
+    <span className="freq-spacer" />
+    <div className="freq-axis">
+      {TICKS_HZ.map((hz) => (
+        <span key={hz} className={isDecade(hz) ? 'major' : undefined} style={{ left: `${logPercent(hz)}%` }}>{tickLabel(hz)}</span>
+      ))}
+    </div>
+  </>
+);
 
 const Bar = ({ hz, className }: { hz: [number, number]; className?: string }) => (
   <div className="freq-bar">
-    <span className={className} style={{ left: `${logPercent(hz[0])}%`, width: `${logPercent(hz[1]) - logPercent(hz[0])}%` }} />
+    <span className={`fill${className ? ` ${className}` : ''}`}
+      style={{ left: `${logPercent(hz[0])}%`, width: `${logPercent(hz[1]) - logPercent(hz[0])}%` }} />
+    {TICKS_HZ.slice(1).map((t) => (
+      <i key={t} className={isDecade(t) ? 'tick major' : 'tick'} style={{ left: `${logPercent(t)}%` }} />
+    ))}
   </div>
 );
 
@@ -42,10 +61,7 @@ export function ReferenceScreen() {
       <h2>{SOURCE_LABELS[source]}</h2>
       <div className="card freq-chart" role="img"
         aria-label={`Frequency chart for ${SOURCE_LABELS[source]}: ${REFERENCE[source].map((r) => `${r.name} ${formatHz(r.hz[0])} to ${formatHz(r.hz[1])}`).join(', ')}.`}>
-        <span />
-        <div className="freq-axis">
-          {AXIS_HZ.map((hz) => <span key={hz} style={{ left: `${logPercent(hz)}%` }}>{formatHz(hz)}</span>)}
-        </div>
+        <Axis />
         {notes && (
           <>
             <span className="freq-label"><strong>Notes played</strong></span>
@@ -58,7 +74,9 @@ export function ReferenceScreen() {
             <Bar hz={r.hz} />
           </Fragment>
         ))}
+        <Axis />
       </div>
+      <p className="muted">Frequencies in Hz, from 20 Hz on the left to 20 kHz on the right (k = thousand, so 2k = 2,000 Hz). Brighter lines mark 100 Hz, 1k and 10k.</p>
       {notes && (
         <p className="muted">
           <strong>Notes played</strong> ({formatHz(notes[0])}–{formatHz(notes[1])}) is where the actual pitches are. Everything above
