@@ -56,7 +56,8 @@ boost)? Tick ☐ → ☑ when a row looks right, and write changes in the Notes 
 
 Frequencies are starting points; the app tells users to try nearby within the "usually" range.
 Where these values came from, and where the app deliberately differs from its sources, is in
-[kb-sources.md](kb-sources.md).
+[kb-sources.md](kb-sources.md). How and when the app uses them is in
+[how-advice-works.md](how-advice-works.md).
 
 ## EQ advice (${KB.length} entries)
 

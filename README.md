@@ -87,9 +87,9 @@ There are two modes, picked with the toggle under the spectrum.
 Advice about the overall sound while everyone's playing.
 
 - **Music / Speech toggle.** Use **Music** for worship sets and **Speech** for the sermon,
-  announcements and prayer. Speech has a different target sound, and in Speech mode the app
-  also tracks the speaker's level swing and suggests compression if they're jumping between
-  quiet and loud.
+  announcements and prayer. Each mode keeps its own "sounds good" reference, Speech mode only
+  suspects the speaker's mic, and it also tracks the speaker's level swing and suggests
+  compression if they're jumping between quiet and loud.
 - **Responsiveness.** How long the app listens before it gives advice:
   - **Steady (30 s):** fewest false alarms. Good once the mix is basically right.
   - **Normal (15 s):** the default.
@@ -397,6 +397,8 @@ If they're `true`, the browser is processing the mic and level-based advice is l
   when a real kit is in the band.
 - **Rules of thumb, not magic.** The knowledge base is standard live-sound practice for small
   rooms, calibrated against published mixing guides (see [`docs/kb-sources.md`](docs/kb-sources.md)).
+  Exactly how the app decides what to say, with every threshold, is in
+  [`docs/how-advice-works.md`](docs/how-advice-works.md).
   It's being reviewed by experienced mixers (see [`docs/kb-review.md`](docs/kb-review.md)).
 - **No cloud sync.** Setup lives on the device you entered it on.
 
@@ -418,8 +420,9 @@ personal info. A recording (Listen → Record a test clip) of the problem helps 
 ### Stack
 
 Vite + React 18 + TypeScript, installed as a PWA with `vite-plugin-pwa`, hosted on GitHub
-Pages. Tests with Vitest. No backend. See [`docs/SPEC.md`](docs/SPEC.md) for the why and
-[`plan.md`](plan.md) for phases and conventions.
+Pages. Tests with Vitest. No backend. See [`docs/SPEC.md`](docs/SPEC.md) for the why,
+[`plan.md`](plan.md) for phases and conventions, and
+[`docs/how-advice-works.md`](docs/how-advice-works.md) for every detection rule and threshold.
 
 ### Run it locally
 

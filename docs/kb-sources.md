@@ -1,9 +1,10 @@
 # Knowledge base sources and calibration
 
 The EQ and compressor advice started as standard small-room live-sound practice. It was then
-calibrated (October 2026) against four guides. The guides themselves aren't in the repo; this
-file records what was taken from them and where the app deliberately differs, so a reviewer
-can check the reasoning.
+calibrated (October 2026) against four guides, kept in [`reference/`](../reference/). This file
+records what was taken from them and where the app deliberately differs, so a reviewer can check
+the reasoning. How the advice is *applied* (detection rules and thresholds) is in
+[how-advice-works.md](how-advice-works.md).
 
 | Guide | Kind | Weight given |
 |---|---|---|
